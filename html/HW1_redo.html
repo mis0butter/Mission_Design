@@ -1,0 +1,833 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>HW1_redo</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-03-01"><meta name="DC.source" content="HW1_redo.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">proficiency check</a></li><li><a href="#2">problem 1</a></li><li><a href="#3">PROB 3</a></li><li><a href="#4">prob 4</a></li><li><a href="#5">subfunctions</a></li></ul></div><h2 id="1">proficiency check</h2><pre class="codeinput">we = 7.292115e-5; <span class="comment">% rad/s</span>
+
+<span class="comment">% JD time (1999-01-21 20:43:47 UTC)</span>
+JD1 = 2500000;
+
+D = @(JD) JD - 2451545.0;
+theta1 = 18.697374458 + 24.06570982 * D(JD1);
+
+JD2 = JD1 + 1;
+theta2 = 18.697374458 + 24.06570982 * D(JD2);
+
+dtheta = theta2 - theta1; <span class="comment">% hours</span>
+dtheta_deg = dtheta * 15;
+we_deg = we * 60 * 60 * 24 * 180/pi;
+
+sprintf(<span class="string">'Proficiency check: accurate to %.9g'</span>, dtheta_deg - we_deg)
+sprintf(<span class="string">'Confirmed Earth rotation rate is %.9g rad/s'</span>, we)
+</pre><pre class="codeoutput">
+ans =
+
+    'Proficiency check: accurate to 4.22746874e-05'
+
+
+ans =
+
+    'Confirmed Earth rotation rate is 7.292115e-05 rad/s'
+
+</pre><h2 id="2">problem 1</h2><pre class="codeinput"><span class="comment">% Constants</span>
+mu=3.986004415e14;
+ae=6378136.3;
+we=7.292115e-5;
+g=9.81;
+J2=1.082e-3;
+ws=1.99096871e-7;
+
+missions = {<span class="string">'Lageos'</span>, <span class="string">'Topex'</span>, <span class="string">'GRACE'</span>, <span class="string">'ERS-1'</span>};
+
+<span class="keyword">for</span> i = 1:numel(missions)
+
+    mission = missions{i};
+
+    <span class="keyword">if</span> isequal(mission,<span class="string">'Topex'</span>)
+    a=7705;
+    e=0.0010;
+    I=65.99;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> isequal(mission,<span class="string">'GRACE'</span>)
+    a=6820;
+    e=0.0016;
+    I=89.02;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> isequal(mission,<span class="string">'ERS-1'</span>)
+    a=7156;
+    e=0.0010;
+    I=98.6;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> isequal(mission,<span class="string">'Lageos'</span>)
+    a=12271;
+    e=0.0040;
+    I=109.83;
+    <span class="keyword">end</span>
+
+    a=a*1000;
+
+    <span class="comment">% Orbital Rates</span>
+    nb=sqrt(mu/a^3);
+
+    dOb=-3/2*nb*(ae/a)^2*J2*cosd(I)/(1-e^2)^(1/2);
+    dwb=-3/4*nb*(ae/a)^2*J2*(1-5*cosd(I)^2)/(1-e^2)^2;
+    dMb=nb*(1-3/4*(ae/a)^2*J2*(1-3*cosd(I)^2)/(1-e^2)^(3/2));
+    dub=dwb+dMb;
+
+    <span class="comment">% Periods</span>
+    Tp=2*pi/nb;
+    Ta=2*pi/dMb;
+    Tn=2*pi/dub;
+    TD=2*pi/(we+dOb);
+    TS=2*pi/(ws+dOb);
+
+    sprintf(<span class="string">'Mission: %s'</span>, mission)
+    sprintf(<span class="string">'Keplerian period = %.5g'</span>, Tp)
+    sprintf(<span class="string">'Anomalistic period = %.5g'</span>, Ta)
+    sprintf(<span class="string">'Draconitic period = %.5g'</span>, Tn)
+    sprintf(<span class="string">'Nodal day = %.5g'</span>, TD)
+    sprintf(<span class="string">'Sun cycle = %.5g'</span>, TS)
+
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">
+ans =
+
+    'Mission: Lageos'
+
+
+ans =
+
+    'Keplerian period = 13528'
+
+
+ans =
+
+    'Anomalistic period = 13530'
+
+
+ans =
+
+    'Draconitic period = 13531'
+
+
+ans =
+
+    'Nodal day = 86083'
+
+
+ans =
+
+    'Sun cycle = 2.3429e+07'
+
+
+ans =
+
+    'Mission: Topex'
+
+
+ans =
+
+    'Keplerian period = 6730.9'
+
+
+ans =
+
+    'Anomalistic period = 6732.7'
+
+
+ans =
+
+    'Draconitic period = 6733.4'
+
+
+ans =
+
+    'Nodal day = 86666'
+
+
+ans =
+
+    'Sun cycle = -2.8134e+07'
+
+
+ans =
+
+    'Mission: GRACE'
+
+
+ans =
+
+    'Keplerian period = 5605.2'
+
+
+ans =
+
+    'Anomalistic period = 5609.1'
+
+
+ans =
+
+    'Draconitic period = 5613.1'
+
+
+ans =
+
+    'Nodal day = 86196'
+
+
+ans =
+
+    'Sun cycle = 3.6555e+07'
+
+
+ans =
+
+    'Mission: ERS-1'
+
+
+ans =
+
+    'Keplerian period = 6024.4'
+
+
+ans =
+
+    'Anomalistic period = 6028.1'
+
+
+ans =
+
+    'Draconitic period = 6031.5'
+
+
+ans =
+
+    'Nodal day = 85927'
+
+
+ans =
+
+    'Sun cycle = 1.5701e+07'
+
+</pre><h2 id="3">PROB 3</h2><pre class="codeinput">clear
+clc
+
+<span class="comment">% Constants</span>
+mu=3.986004415e14;
+ae=6378136.3;
+we=7.292115e-5;
+g=9.81;
+J2=1.082e-3;
+ws=2*pi/365.2422/24/60/60;
+
+<span class="comment">% orbit</span>
+alt=350000;
+a=alt+ae;
+e=0;
+I=35;
+Long=+5.157;
+n=sqrt(mu/a^3);
+
+<span class="comment">% O Precession Calcs</span>
+sprintf(<span class="string">'O precession:'</span>)
+Odot = -(3/2)*n*(ae/a)^2*J2*(1/(1-e^2)^(1/2))*cosd(I) <span class="comment">% O precession</span>
+
+sprintf(<span class="string">'O precession for day:'</span>)
+Odotday = Odot*3600*24 <span class="comment">% for day</span>
+
+sprintf(<span class="string">'Sun Precession for day:'</span>)
+wsd = ws*3600*24 <span class="comment">% Sun Precession for day</span>
+
+sprintf(<span class="string">'Sun cycle period days:'</span>)
+Cs = 2*pi/(Odotday-wsd) <span class="comment">% Sun Cycle period days</span>
+
+sprintf(<span class="string">'Clock time to decimal:'</span>)
+tc = 20+43/60+47/3600 <span class="comment">% clock time to decimal</span>
+
+sprintf(<span class="string">'Local time at crossing TRMM:'</span>)
+LMTT = tc+(Long/15) <span class="comment">% Local time at crossing TRMM</span>
+
+sprintf(<span class="string">'Local time Resurs'</span>)
+LMTR = 22+20/60 <span class="comment">% Local time Resurs</span>
+
+sprintf(<span class="string">'Difference time between LMTT and LMTR:'</span>)
+time_diff = (LMTT-LMTR) <span class="comment">% Difference time</span>
+
+sprintf(<span class="string">'Initial difference in time:'</span>)
+O_diff_change_day= 24/Cs <span class="comment">%initial difference in time</span>
+
+sprintf(<span class="string">'Days since last cross: '</span>)
+Offset = time_diff/(O_diff_change_day) <span class="comment">% Days since last cross</span>
+
+sprintf(<span class="string">'Amount of crosses in 1 year:'</span>)
+k=0:round(abs(365.2425/Cs))-1 <span class="comment">% amount of crosses in one year</span>
+
+sprintf(<span class="string">'offset by initial cross beforehand and set to cycle every Solar cycle:'</span>)
+Jk=round(21-Offset)+fix(k*abs(Cs)) <span class="comment">% offset by initial cross beforehand and set to cycle every Solar cycle</span>
+</pre><pre class="codeoutput">
+ans =
+
+    'O precession:'
+
+
+Odot =
+
+    -1.366808860265681e-06
+
+
+ans =
+
+    'O precession for day:'
+
+
+Odotday =
+
+  -0.118092285526955
+
+
+ans =
+
+    'Sun Precession for day:'
+
+
+wsd =
+
+   0.017202791208627
+
+
+ans =
+
+    'Sun cycle period days:'
+
+
+Cs =
+
+ -46.440605665639453
+
+
+ans =
+
+    'Clock time to decimal:'
+
+
+tc =
+
+  20.729722222222222
+
+
+ans =
+
+    'Local time at crossing TRMM:'
+
+
+LMTT =
+
+  21.073522222222223
+
+
+ans =
+
+    'Local time Resurs'
+
+
+LMTR =
+
+  22.333333333333332
+
+
+ans =
+
+    'Difference time between LMTT and LMTR:'
+
+
+time_diff =
+
+  -1.259811111111109
+
+
+ans =
+
+    'Initial difference in time:'
+
+
+O_diff_change_day =
+
+  -0.516789125723163
+
+
+ans =
+
+    'Days since last cross: '
+
+
+Offset =
+
+   2.437766292679254
+
+
+ans =
+
+    'Amount of crosses in 1 year:'
+
+
+k =
+
+     0     1     2     3     4     5     6     7
+
+
+ans =
+
+    'offset by initial cross beforehand and set to cycle every Solar cycle:'
+
+
+Jk =
+
+    19    65   111   158   204   251   297   344
+
+</pre><h2 id="4">prob 4</h2><pre class="codeinput">h = 500e3;  <span class="comment">% m</span>
+a0 = ae + h;
+e0 = 0;
+I0 = 89 * pi/180;     <span class="comment">% rad</span>
+w0 = 0;
+long0 = 0;
+M0 = 0;
+
+<span class="comment">% rv0 = oe2rv(0, [a0 e0 I0 w0 long0 nu0]);</span>
+
+<span class="comment">%  Define parameters for a state lookup:</span>
+<span class="comment">% t0      = 'Oct 20, 2020 11:00 AM CST';</span>
+t0      = <span class="string">'May 22, 2018'</span>;
+abcorr  = <span class="string">'NONE'</span>;
+
+<span class="comment">%  Convert the epoch to ephemeris time (secs)</span>
+et_t0   = cspice_str2et( t0 );
+
+<span class="comment">% get states --&gt; Earth to Sun</span>
+target   = <span class="string">'Sun'</span>;
+frame    = <span class="string">'J2000'</span>;
+observer = <span class="string">'Earth'</span>;
+abcorr   = <span class="string">'NONE'</span>;
+
+<span class="comment">% orbit rate equations</span>
+nb = @(a) sqrt(mu/a^3);
+dlongb = @(a, e, I) -3/2*nb(a)*(ae/a)^2*J2*cos(I)/(1-e^2)^(1/2);
+dwb = @(a, e, I) -3/4*nb(a)*(ae/a)^2*J2*(1-5*cos(I)^2)/(1-e^2)^2;
+dMb = @(a, e, I) nb(a)*(1-3/4*(ae/a)^2*J2*(1-3*cos(I)^2)/(1-e^2)^(3/2));
+dub = @(dwb, dMb) dwb+dMb;
+
+<span class="keyword">for</span> k = 1 : 1 : 12*365
+
+    <span class="comment">% delta time</span>
+    dt = k * 60 * 60 * 24;
+
+    <span class="comment">% rest of OEs</span>
+    w(k,:)      = w0 + dwb(a0, e0, I0) * dt;
+    long(k,:)   = long0 + dlongb(a0, e0, I0) * dt;
+    M(k,:)      = M0 + dMb(a0, e0, I0) * dt;
+
+    <span class="comment">% convert to cartesian</span>
+    rv = oe2rv([a0, e0, I0, w(k,:), long(k,:), M(k,:)]);
+<span class="comment">%     rv = fn.orb2rv([a0, e0, I0, w(k,:), long(k,:), M(k,:)]);</span>
+
+    <span class="comment">% orbit plane</span>
+    h = cross(rv(1:3), rv(4:6));
+    h = h / norm(h);
+
+    <span class="comment">% get sun position</span>
+    et = et_t0 + dt;    <span class="comment">% propagate ephemeris time by 1 day in secs</span>
+    X_Esun  = spice_state(et, target, frame, abcorr, observer);
+    X_Esun  = X_Esun';
+    r_sun   = X_Esun(1:3);
+    r_sun   = r_sun / norm(r_sun);
+
+    <span class="comment">% get projection</span>
+    sun_proj = dot(h, r_sun);
+
+    <span class="comment">% Jonathan's method beta prime</span>
+    b_prime(k,:) = 90 - acosd(sun_proj);
+
+<span class="keyword">end</span>
+
+fname = <span class="string">'beta prime'</span>;
+figure(<span class="string">'name'</span>, fname);
+    plot(b_prime);
+    xlabel(<span class="string">'Days'</span>)
+    ylabel(<span class="string">'deg'</span>)
+    title(<span class="string">'Beta prime'</span>)
+
+sprintf(<span class="string">'a. Q: Is the variation of the beta prime angle periodic?'</span>)
+sprintf(<span class="string">'a. A: Yes'</span>)
+
+sprintf(<span class="string">'b. Q: Is the variation of the beta prime angle sinusoidal?'</span>)
+sprintf(<span class="string">'b. A: Yes'</span>)
+
+sprintf(<span class="string">'c. Q: Why doesn&#8217;t beta prime angle in each cycle reach the same maximum value?'</span>)
+sprintf(<span class="string">'c. A: Because of orbital precession and other perturbing forces (like J2).'</span>)
+</pre><h2 id="5">subfunctions</h2><pre class="codeinput"><span class="keyword">function</span> rv = spice_state(epoch, target, frame, abcorr, observer)
+
+    rv = zeros(length(epoch), 6);
+
+    <span class="keyword">for</span> i = 1:length(epoch)
+
+        <span class="comment">%  Look-up the state for the defined parameters.</span>
+        starg   = mice_spkezr( target, epoch(i), frame, abcorr, observer);
+        rv(i,:) = starg.state(1:6);
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">
+ans =
+
+    'a. Q: Is the variation of the beta prime angle periodic?'
+
+
+ans =
+
+    'a. A: Yes'
+
+
+ans =
+
+    'b. Q: Is the variation of the beta prime angle sinusoidal?'
+
+
+ans =
+
+    'b. A: Yes'
+
+
+ans =
+
+    'c. Q: Why doesn&#8217;t beta prime angle in each cycle reach the same maximum value?'
+
+
+ans =
+
+    'c. A: Because of orbital precession and other perturbing forces (like J2).'
+
+</pre><img vspace="5" hspace="5" src="HW1_redo_01.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% proficiency check 
+
+we = 7.292115e-5; % rad/s 
+
+% JD time (1999-01-21 20:43:47 UTC)
+JD1 = 2500000; 
+
+D = @(JD) JD - 2451545.0; 
+theta1 = 18.697374458 + 24.06570982 * D(JD1); 
+
+JD2 = JD1 + 1; 
+theta2 = 18.697374458 + 24.06570982 * D(JD2); 
+
+dtheta = theta2 - theta1; % hours 
+dtheta_deg = dtheta * 15; 
+we_deg = we * 60 * 60 * 24 * 180/pi; 
+
+sprintf('Proficiency check: accurate to %.9g', dtheta_deg - we_deg)
+sprintf('Confirmed Earth rotation rate is %.9g rad/s', we)
+
+%% problem 1 
+
+% Constants
+mu=3.986004415e14;
+ae=6378136.3;
+we=7.292115e-5;
+g=9.81;
+J2=1.082e-3;
+ws=1.99096871e-7;
+
+missions = {'Lageos', 'Topex', 'GRACE', 'ERS-1'}; 
+
+for i = 1:numel(missions)
+    
+    mission = missions{i}; 
+    
+    if isequal(mission,'Topex')
+    a=7705;
+    e=0.0010;
+    I=65.99;
+    end
+
+    if isequal(mission,'GRACE')
+    a=6820;
+    e=0.0016;
+    I=89.02;
+    end
+
+    if isequal(mission,'ERS-1')
+    a=7156;
+    e=0.0010;
+    I=98.6;
+    end
+
+    if isequal(mission,'Lageos')
+    a=12271;
+    e=0.0040;
+    I=109.83;
+    end
+
+    a=a*1000;
+
+    % Orbital Rates
+    nb=sqrt(mu/a^3);
+
+    dOb=-3/2*nb*(ae/a)^2*J2*cosd(I)/(1-e^2)^(1/2);
+    dwb=-3/4*nb*(ae/a)^2*J2*(1-5*cosd(I)^2)/(1-e^2)^2;
+    dMb=nb*(1-3/4*(ae/a)^2*J2*(1-3*cosd(I)^2)/(1-e^2)^(3/2));
+    dub=dwb+dMb;
+
+    % Periods
+    Tp=2*pi/nb;
+    Ta=2*pi/dMb;
+    Tn=2*pi/dub;
+    TD=2*pi/(we+dOb);
+    TS=2*pi/(ws+dOb);
+    
+    sprintf('Mission: %s', mission)
+    sprintf('Keplerian period = %.5g', Tp)
+    sprintf('Anomalistic period = %.5g', Ta) 
+    sprintf('Draconitic period = %.5g', Tn)
+    sprintf('Nodal day = %.5g', TD) 
+    sprintf('Sun cycle = %.5g', TS) 
+
+end 
+
+%% PROB 3
+
+clear
+clc
+
+% Constants
+mu=3.986004415e14;
+ae=6378136.3;
+we=7.292115e-5;
+g=9.81;
+J2=1.082e-3;
+ws=2*pi/365.2422/24/60/60;
+
+% orbit
+alt=350000;
+a=alt+ae;
+e=0;
+I=35;
+Long=+5.157;
+n=sqrt(mu/a^3);
+
+% O Precession Calcs
+sprintf('O precession:')
+Odot = -(3/2)*n*(ae/a)^2*J2*(1/(1-e^2)^(1/2))*cosd(I) % O precession
+
+sprintf('O precession for day:')
+Odotday = Odot*3600*24 % for day
+
+sprintf('Sun Precession for day:')
+wsd = ws*3600*24 % Sun Precession for day
+
+sprintf('Sun cycle period days:')
+Cs = 2*pi/(Odotday-wsd) % Sun Cycle period days
+
+sprintf('Clock time to decimal:')
+tc = 20+43/60+47/3600 % clock time to decimal
+
+sprintf('Local time at crossing TRMM:')
+LMTT = tc+(Long/15) % Local time at crossing TRMM
+
+sprintf('Local time Resurs')
+LMTR = 22+20/60 % Local time Resurs
+
+sprintf('Difference time between LMTT and LMTR:')
+time_diff = (LMTT-LMTR) % Difference time
+
+sprintf('Initial difference in time:')
+O_diff_change_day= 24/Cs %initial difference in time
+
+sprintf('Days since last cross: ')
+Offset = time_diff/(O_diff_change_day) % Days since last cross
+
+sprintf('Amount of crosses in 1 year:')
+k=0:round(abs(365.2425/Cs))-1 % amount of crosses in one year
+
+sprintf('offset by initial cross beforehand and set to cycle every Solar cycle:')
+Jk=round(21-Offset)+fix(k*abs(Cs)) % offset by initial cross beforehand and set to cycle every Solar cycle
+
+
+%% prob 4 
+
+h = 500e3;  % m  
+a0 = ae + h; 
+e0 = 0; 
+I0 = 89 * pi/180;     % rad
+w0 = 0; 
+long0 = 0; 
+M0 = 0; 
+
+% rv0 = oe2rv(0, [a0 e0 I0 w0 long0 nu0]); 
+
+%  Define parameters for a state lookup:
+% t0      = 'Oct 20, 2020 11:00 AM CST'; 
+t0      = 'May 22, 2018'; 
+abcorr  = 'NONE';
+
+%  Convert the epoch to ephemeris time (secs) 
+et_t0   = cspice_str2et( t0 );
+
+% get states REPLACE_WITH_DASH_DASH> Earth to Sun 
+target   = 'Sun';
+frame    = 'J2000';
+observer = 'Earth';
+abcorr   = 'NONE';
+
+% orbit rate equations 
+nb = @(a) sqrt(mu/a^3);
+dlongb = @(a, e, I) -3/2*nb(a)*(ae/a)^2*J2*cos(I)/(1-e^2)^(1/2);
+dwb = @(a, e, I) -3/4*nb(a)*(ae/a)^2*J2*(1-5*cos(I)^2)/(1-e^2)^2;
+dMb = @(a, e, I) nb(a)*(1-3/4*(ae/a)^2*J2*(1-3*cos(I)^2)/(1-e^2)^(3/2));
+dub = @(dwb, dMb) dwb+dMb;
+
+for k = 1 : 1 : 12*365 
+
+    % delta time 
+    dt = k * 60 * 60 * 24; 
+    
+    % rest of OEs 
+    w(k,:)      = w0 + dwb(a0, e0, I0) * dt; 
+    long(k,:)   = long0 + dlongb(a0, e0, I0) * dt; 
+    M(k,:)      = M0 + dMb(a0, e0, I0) * dt; 
+    
+    % convert to cartesian 
+    rv = oe2rv([a0, e0, I0, w(k,:), long(k,:), M(k,:)]); 
+%     rv = fn.orb2rv([a0, e0, I0, w(k,:), long(k,:), M(k,:)]); 
+    
+    % orbit plane 
+    h = cross(rv(1:3), rv(4:6)); 
+    h = h / norm(h); 
+    
+    % get sun position 
+    et = et_t0 + dt;    % propagate ephemeris time by 1 day in secs 
+    X_Esun  = spice_state(et, target, frame, abcorr, observer); 
+    X_Esun  = X_Esun'; 
+    r_sun   = X_Esun(1:3); 
+    r_sun   = r_sun / norm(r_sun); 
+    
+    % get projection 
+    sun_proj = dot(h, r_sun); 
+    
+    % Jonathan's method beta prime 
+    b_prime(k,:) = 90 - acosd(sun_proj); 
+    
+end 
+
+fname = 'beta prime'; 
+figure('name', fname); 
+    plot(b_prime); 
+    xlabel('Days') 
+    ylabel('deg') 
+    title('Beta prime') 
+    
+sprintf('a. Q: Is the variation of the beta prime angle periodic?')
+sprintf('a. A: Yes')
+
+sprintf('b. Q: Is the variation of the beta prime angle sinusoidal?')
+sprintf('b. A: Yes')
+
+sprintf('c. Q: Why doesn’t beta prime angle in each cycle reach the same maximum value?')
+sprintf('c. A: Because of orbital precession and other perturbing forces (like J2).')
+
+%% subfunctions 
+
+function rv = spice_state(epoch, target, frame, abcorr, observer) 
+
+    rv = zeros(length(epoch), 6); 
+    
+    for i = 1:length(epoch) 
+
+        %  Look-up the state for the defined parameters.
+        starg   = mice_spkezr( target, epoch(i), frame, abcorr, observer);
+        rv(i,:) = starg.state(1:6); 
+        
+    end 
+
+end 
+
+
+
+
+
+
+
+
+
+
+
+##### SOURCE END #####
+--></body></html>
