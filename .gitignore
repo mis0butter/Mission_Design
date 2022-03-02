@@ -2,6 +2,9 @@
 mice/
 spice_data
 
+# matlab 
+*.asv 
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
