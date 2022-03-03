@@ -5,7 +5,7 @@
 we = 7.292115e-5; % rad/s 
 
 % JD time (1999-01-21 20:43:47 UTC)
-JD1 = 2500000; 
+JD1 = 0; 
 
 D = @(JD) JD - 2451545.0; 
 theta1 = 18.697374458 + 24.06570982 * D(JD1); 
@@ -16,6 +16,8 @@ theta2 = 18.697374458 + 24.06570982 * D(JD2);
 dtheta = theta2 - theta1; % hours 
 dtheta_deg = dtheta * 15; 
 we_deg = we * 60 * 60 * 24 * 180/pi; 
+% we_deg = we * 86164 * 180/pi; 
+
 
 sprintf('Proficiency check: accurate to %.9g', dtheta_deg - we_deg)
 sprintf('Confirmed Earth rotation rate is %.9g rad/s', we)
@@ -99,7 +101,7 @@ g=9.81;
 J2=1.082e-3;
 ws=2*pi/365.2422/24/60/60;
 
-% orbit
+% orbit 
 alt=350000;
 a=alt+ae;
 e=0;
