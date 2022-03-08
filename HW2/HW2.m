@@ -1,148 +1,95 @@
 %% HW 2 
 % Junette Hsin 
 
-% Keplerian elements 
-% a     = semi-major axis 
-% e     = eccentricity 
-% i     = inclination 
-% L     = mean longitude 
-% wbar  = longitude of perihelion 
-% Omega = longitude of ascending node 
+% close all; 
+clear; 
 
-clear; clc 
+%% transfer angle = 75 deg 
 
-% Earth 
-Earth.a0 =      1.00000261; 
-Earth.da =      0.00000562; 
-Earth.e0 =      0.01671123; 
-Earth.de =     -0.00004392; 
-Earth.I0 =     -0.00001531; 
-Earth.dI =     -0.01294668;
-Earth.L0 =    100.46457166; 
-Earth.dL =  35999.37244981; 
-Earth.wbar0 = 102.93768193; 
-Earth.dwbar =   0.32327364;
-Earth.Omega0 =  0; 
-Earth.dOmega =  0; 
+%  Define parameters for a state lookup:
+% t0      = 'Oct 20, 2020 11:00 AM CST'; 
+t0      = 'May 22, 1980'; 
 
-% Mars 
-Mars.a0 =      1.52371034; 
-Mars.da =      0.00001847; 
-Mars.e0 =      0.09339410; 
-Mars.de =      0.00007882; 
-Mars.I0 =      1.84969142; 
-Mars.dI =     -0.00813131; 
-Mars.L0 =     -4.55343205; 
-Mars.dL =  19140.30268499; 
-Mars.wbar0 = -23.94362959; 
-Mars.dwbar =   0.44441088; 
-Mars.Omega0 = 49.55953891; 
-Mars.dOmega = -0.29257343; 
+phi_t_des = 165; 
+lambert_prob(t0, phi_t_des, 1); 
 
-%% Try Future Earth 
+%% phi = 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180 degrees
 
-% Departure (Earth), AU units 
-Teph = 2451545.0;
-rd = xyz_ecl(Teph, Earth); 
-rd_mag = norm(rd); 
+phi_d_hist  = []; 
+phi_a_hist  = []; 
+tof_hist = []; 
+phi_t_hist = []; 
 
-% transfer angle (deg)
-phi = 75; 
+phi0 = 15; 
+for phi = phi0 : 15 : 180 
+    
+    phi_t_des = phi; 
+    [ell_1_min, ell_2_min] = lambert_prob(t0, phi_t_des, 0); 
+    
+    % departure angle: 
+    % (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+    phi_d_hist = [phi_d_hist; ... 
+        ell_1_min.phi_ds, ell_1_min.phi_dl, ell_2_min.phi_ds, ell_2_min.phi_dl]; 
 
-% Arrival (Mars), AU units 
-tof = 26*7*24*60*60; 
-Teph = 2451545.0 + tof;   % 26 weeks 
-ra = xyz_ecl(Teph, Mars); 
-ra_mag = norm(ra); 
+    % arrival angle 
+    % (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+    phi_a_hist = [phi_a_hist; ... 
+        ell_1_min.phi_as, ell_1_min.phi_al, ell_2_min.phi_as, ell_2_min.phi_al]; 
 
-% Vallado method ... 
-cos_dv = dot(rd, ra); 
-cos_dv = cos_dv / norm(cos_dv); 
+    % time of flight 
+    % (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+    tof_hist = [tof_hist; ... 
+        ell_1_min.dt_s, ell_1_min.dt_l, ell_2_min.dt_s, ell_2_min.dt_l]; 
 
-% chord 
-c = sqrt( rd_mag^2 + ra_mag^2 - 2*rd_mag*ra_mag*cos_dv ); 
-
-% semiperimeter 
-s = ( ra_mag + rd_mag + c ) / 2; 
-
-% min semimajor axis 
-a = s/2;  
-
-% time of flight 
-ae = 2 * asind( sqrt( s/(2*a) ) ); 
-be = 2 * asind( sqrt( (s-c)/(2*a) ) ); 
-% dt = sqrt( a^3/mu ) * (( 2*nrev*pi + ae - sin(ae) + (be - sin(be)) )); 
-
-% [V1, V2] = LAMBERTBATTIN(rd, ra, 'retro', tof); 
-
-
-
-
-%% Try Future Earth 
-
-function [r_ecl] = xyz_ecl(Teph, planet)
-
-T = (Teph - 2451545.0)/36525;
-
-% propagate 6 elements 
-a = planet.a0 + planet.da * T; 
-e = planet.e0 + planet.de * T; 
-I = planet.I0 + planet.dI * T; 
-L = planet.L0 + planet.dL * T; 
-wbar = planet.wbar0 + planet.dwbar * T; 
-Omega = planet.Omega0 + planet.dOmega * T; 
-
-% argument of perihelion 
-w = planet.wbar0 - planet.Omega0; 
-
-% mean anomaly 
-M = planet.L0 - planet.wbar0; 
-
-% mean motion 
-n = 2*pi / 2; 
-
-% eccentric anomaly 
-E = keplerEq(M, planet.e0, eps); 
-
-% heliocentric coordinates in orbital plane, xp algined from focus to
-% perihelion 
-xp = a * (cos(E) - e); 
-yp = a * sqrt( 1 - e^2 ) * sin(E); 
-zp = 0; 
-
-% coordinates in J2000 ecliptic plane, x aligned toward equinox 
-x_ecl = (  cos(w)*cos(Omega) - sin(w)*sin(Omega)*cos(I) ) * xp + ... 
-        ( -sin(w)*cos(Omega) - cos(w)*sin(Omega)*cos(I) ) * yp ; 
-y_ecl = (  cos(w)*sin(Omega) + sin(w)*cos(Omega)*cos(I) ) * xp + ... 
-        ( -sin(w)*sin(Omega) + cos(w)*cos(Omega)*cos(I) ) * yp;     
-z_ecl = ( sin(w)*sin(I) ) * xp + ( cos(w)*sin(I) ) * yp; 
-r_ecl = [x_ecl; y_ecl; z_ecl]; 
-
-% obliquity at J2000 (deg) 
-e_obl = 23.43928; 
-
-% "ICRF" or "J2000 frame"
-x_eq  = x_ecl; 
-y_eq  = cos(e_obl)*y_ecl - sin(e_obl)*z_ecl; 
-z_eq  = sin(e_obl)*y_ecl + cos(e_obl)*z_ecl; 
-
+    % transfer angle 
+    phi_t_hist = [phi_t_hist; phi_t_des]; 
+        
+    
 end 
 
+%%
 
-%% Kepler equation solver 
+colors = {'k', 'b', 'r', 'g'}; 
+style = {'p', '^', '--', '.'}; 
+lwidth = [3, 1.5, 1, 1]; 
 
-function E = keplerEq(M,e,eps)
-% Function solves Kepler's equation M = E-e*sin(E)
-% Input - Mean anomaly M [rad] , Eccentricity e and Epsilon 
-% Output  eccentric anomaly E [rad]. 
-   	En  = M;
-	Ens = En - (En-e*sin(En)- M)/(1 - e*cos(En));
-	while ( abs(Ens-En) > eps )
-		En = Ens;
-		Ens = En - (En - e*sin(En) - M)/(1 - e*cos(En));
-    end
-	E = Ens;
-end
+figure()
+    subplot(3,1,1) 
+        hold on;
+        for i = 1:4
+%             scatter(phi_t_hist, phi_d_hist(:,i), 4, colors{i});  
+            h(i) = plot(phi_t_hist, phi_d_hist(:,i), [colors{i} style{i}]); 
+        end 
+        title('Departure Angle')
+        ylabel('deg') 
+        legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+    
+    subplot(3,1,2) 
+        hold on;
+        for i = 1:4
+%             scatter(phi_t_hist, phi_a_hist(:,i), 4, colors{i});  
+            h(i) = plot(phi_t_hist, phi_a_hist(:,i), [colors{i} style{i}]); 
+        end 
+        title('Arrival Angle') 
+        ylabel('deg') 
+        legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+        
+    subplot(3,1,3) 
+        hold on; 
+        for i = 1:4
+%             scatter(phi_t_hist, tof_hist(:,i), 4, colors{i});  
+            h(i) = plot(phi_t_hist, tof_hist(:,i), [colors{i} style{i}]); 
+        end 
+        title('Time of Flight') 
+        ylabel('deg') 
+        legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+        
+    xlabel('Transfer Angle Phi (deg)') 
+
+    sgtitle('Min Energy Parameters') 
+
+
+
 
 
 
