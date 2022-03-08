@@ -1,4 +1,4 @@
-function oe = rv2orb (rv)
+function oe = rv2orb (rv, mu)
 % ------------------------------------------------------------------------
 % Purpose: convert eci state vector to six classical orbital
 % elements via equinoctial elements
@@ -23,7 +23,7 @@ function oe = rv2orb (rv)
 % 
 % ------------------------------------------------------------------------
 
-global mu 
+% global mu 
 
 r = rv(1:3); 
 v = rv(4:6); 

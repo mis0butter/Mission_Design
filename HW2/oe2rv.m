@@ -1,4 +1,4 @@
-function [rv] = oe2rv(oe)
+function [rv] = oe2rv(oe, mu)
 % ------------------------------------------------------------------------ 
 % Purpose: Convert orbital elements and time past epoch to the classic 
 % Cartesian position and velocity
@@ -6,13 +6,13 @@ function [rv] = oe2rv(oe)
 % Inputs: 
 %   oe      = [6x1] or [1x6] orbital elements 
 %   delta_t = t - t0 time interval 
-%   mu      = Gravity * Mass (of Earth) constant 
+%   mu      = Gravity * Mass constant 
 % 
 % Outputs: 
 %   rv      = position and velocity state vector 
 % ------------------------------------------------------------------------ 
 
-global mu 
+% global mu 
 
 % orbital elements 
 a       = oe(1); 
@@ -31,8 +31,8 @@ M       = oe(6);
 % M = M0 + sqrt( mu/a^3 ) * (delta_t); 
 %% 
 
-E = keplerEq(M, e, eps); 
-% E = kepler(M, e); 
+% E = keplerEq(M, e, eps); 
+E = kepler(M, e); 
 
 nu = 2*atan( sqrt( (1+e)/(1-e) ) * tan(E/2) ); 
 
@@ -47,7 +47,7 @@ v_pf(3) = 0;
 r_pf(1) = r * cos(nu); 
 r_pf(2) = r * sin(nu); 
 v_pf(1) = -sqrt(mu/p) * sin(nu); 
-v_pf(2) = sqrt(mu/p) * (e + cos(nu)); 
+v_pf(2) =  sqrt(mu/p) * (e + cos(nu)); 
 
 % Perifocal to ECI transformation, 3-1-3 rotation 
 R11 = cos(LAN)*cos(omega) - sin(LAN)*sin(omega)*cos(i); 
