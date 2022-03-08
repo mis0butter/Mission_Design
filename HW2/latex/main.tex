@@ -1,4 +1,242 @@
-%% RIGHT HERE 
+\documentclass[conf]{new-aiaa}
+%\documentclass[journal]{new-aiaa} for journal papers
+\usepackage[utf8]{inputenc}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{commath}
+\usepackage[version=4]{mhchem}
+\usepackage{siunitx}
+\usepackage{longtable,tabularx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{pdfpages}
+\usepackage{color} %red, green, blue, yellow, cyan, magenta, black, white
+\definecolor{mygreen}{RGB}{28,172,0} % color values Red, Green, Blue
+\definecolor{mylilas}{RGB}{170,55,241}
+\setlength\LTleft{0pt} 
+
+\lstset{language=Matlab,%
+	basicstyle=\footnotesize,
+	breaklines=true,%
+	morekeywords={matlab2tikz},
+	keywordstyle=\color{blue},%
+	morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
+	identifierstyle=\color{black},%
+	stringstyle=\color{mylilas},
+	commentstyle=\color{mygreen},%
+	showstringspaces=false,%without this there will be a symbol in the places where there is a space
+	numbers=left,%
+	numberstyle={\tiny \color{black}},% size of the numbers
+	numbersep=9pt, % this defines how far the numbers are from the text
+	emph=[1]{for,end,break},emphstyle=[1]\color{red}, %some words to emphasise
+	%emph=[2]{word1,word2}, emphstyle=[2]{style},    
+}
+
+% ================================================================ % 
+\title{ASE387P.2 Mission Analysis and Design \\ Homework 2}
+
+\author{Junette Hsin}
+\affil{Masters Student, Aerospace Engineering and Engineering Mechanics, University of Texas, Austin, TX 78712}
+
+\begin{document}
+
+\maketitle
+
+% \begin{abstract}
+
+	% The theory and algorithms are derived and computer program to establish the trajectory of
+	% an Earth-orbiting satellite is developed. The assumptions for the study are ...
+
+% \end{abstract}
+
+\newpage 
+% ================================================================ % 
+\section*{Problem 1}
+
+% Statement 
+Consider the possible transfer orbits from Earth to
+Mars. Assume both planets are in coplanar circular heliocentric orbits. Consider a transfer
+angle of 75°. 
+
+% 1.a 
+\subsection*{A}
+
+Choose a range of semi-major axes up to a distance of 2 A.U. and draw a plot (to
+scale) of the semi-major axes (X-axis) versus time-of-flight (Y-axis) of the
+transfer orbit. Note that there are two possible times for flight for each transfer
+orbit semi-major axis – the short-way and the long-way.
+
+\subsubsection*{Solution}
+
+\begin{figure}[H]
+	\centering 
+	\includegraphics[width=0.8\textwidth]{phi75_Ellipse 1 and 2 TOF and Angles.pdf}
+	\caption{TOF and Departure/Arrival Angles vs. a}
+	\label{fig:TOF_angles_a}
+\end{figure}
+
+% 1.b 
+\subsection*{B}
+What is the value of the semi-major axis and eccentricity for the minimum energy
+transfer orbit?
+
+\subsubsection*{Solution}
+
+$A_{min}$ = 0.97301 AU and $e_{min}$ = 0.53129. 
+
+% 1.c 
+\subsection*{C}
+For the given transfer angle and for any chosen semi-major axis, at the departure
+and arrival points, calculate the angles between the velocity of the probe and the
+velocity of the departure and arrival planets, respectively. Let us call these
+“departure angle” and “arrival angle” – this may be non-standard terminology.
+We have two of each – one for short-way travel and another for long-way travel.
+
+\subsubsection*{Solution}
+
+Please see Figure \ref{fig:TOF_angles_a}. The Battin Method from Vallado (Fundamentals of Astrodynamics and Applications, ed. 4) was used to calculate the velocity vectors and angles for the departure and arrival positions. 
+
+% 1.d 
+\subsection*{D}
+Plot the departure and arrival angles for this case as a function of the transfer orbit
+semi-major axis.
+
+\subsubsection*{Solution}
+
+Please see Figure \ref{fig:TOF_angles_a}. 
+
+% 1.e 
+\subsection*{E}
+Discuss the significance of these plots for decision-making on the choice of semimajor axes for the fixed transfer angle.
+
+\subsubsection*{Solution}
+
+\newpage 
+% ================================================================ % 
+\section*{Problem 2}
+
+Repeat Problem 1 for 15° increments of the transfer angle, that is for [15, 30,45, 60, 75,
+90, 105, 120, 135, 150, 165, 180] degrees.
+
+% 2.a 
+\subsection*{A}
+Plot the departure angle, the arrival angle, and the time-of-flight for the minimum
+energy transfer orbit as a function of the transfer angle.
+
+\subsubsection*{Solution}
+
+
+% 2.b 
+\subsection*{B}
+Discuss the significance of these plots for decision-making on the choice of
+transfer angle and the semi-major axes of the transfer orbit.
+
+\subsubsection*{Solution}
+
+
+\newpage
+% ================================================================ % 
+\section*{Appendix} 
+
+\subsection*{MATLAB code} 
+
+\begin{lstlisting}
+	%% HW 2 
+	% Junette Hsin 
+	
+	% close all; 
+	clear; 
+	
+	%% transfer angle = 75 deg 
+	
+	%  Define parameters for a state lookup:
+	% t0      = 'Oct 20, 2020 11:00 AM CST'; 
+	t0      = 'May 22, 1950'; 
+	
+	phi_t_des = 180; 
+	[ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(t0, phi_t_des, 1); 
+	
+	
+	%% phi = 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180 degrees
+	
+	phi_d_hist  = []; 
+	phi_a_hist  = []; 
+	tof_hist = []; 
+	phi_t_hist = []; 
+	
+	phi0 = 15; 
+	for phi = phi0 : 15 : 180 
+		
+		phi_t_des = phi; 
+		[ell_1_min, ell_2_min] = lambert_prob(t0, phi_t_des, 0); 
+		
+		% departure angle: 
+		% (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+		phi_d_hist = [phi_d_hist; ... 
+			ell_1_min.phi_ds, ell_1_min.phi_dl, ell_2_min.phi_ds, ell_2_min.phi_dl]; 
+	
+		% arrival angle 
+		% (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+		phi_a_hist = [phi_a_hist; ... 
+			ell_1_min.phi_as, ell_1_min.phi_al, ell_2_min.phi_as, ell_2_min.phi_al]; 
+	
+		% time of flight 
+		% (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+		tof_hist = [tof_hist; ... 
+			ell_1_min.dt_s, ell_1_min.dt_l, ell_2_min.dt_s, ell_2_min.dt_l]; 
+	
+		% transfer angle 
+		phi_t_hist = [phi_t_hist; phi_t_des]; 
+			
+		
+	end 
+	
+	%%
+	
+	colors = {'k', 'b', 'r', 'g'}; 
+	style = {'p', '^', '--', '.'}; 
+	lwidth = [3, 1.5, 1, 1]; 
+	
+	figure()
+		subplot(3,1,1) 
+			hold on;
+			for i = 1:4
+	%             scatter(phi_t_hist, phi_d_hist(:,i), 4, colors{i});  
+				h(i) = plot(phi_t_hist, phi_d_hist(:,i), [colors{i} style{i}]); 
+			end 
+			title('Departure Angle')
+			ylabel('deg') 
+			legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+		
+		subplot(3,1,2) 
+			hold on;
+			for i = 1:4
+	%             scatter(phi_t_hist, phi_a_hist(:,i), 4, colors{i});  
+				h(i) = plot(phi_t_hist, phi_a_hist(:,i), [colors{i} style{i}]); 
+			end 
+			title('Arrival Angle') 
+			ylabel('deg') 
+			legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+			
+		subplot(3,1,3) 
+			hold on; 
+			for i = 1:4
+	%             scatter(phi_t_hist, tof_hist(:,i), 4, colors{i});  
+				h(i) = plot(phi_t_hist, tof_hist(:,i), [colors{i} style{i}]); 
+			end 
+			title('Time of Flight') 
+			ylabel('deg') 
+			legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+			
+		xlabel('Transfer Angle Phi (deg)') 
+	
+		sgtitle('Min Energy Parameters') 
+	
+	%% save plots 
+	
+	
+	%% RIGHT HERE 
 function [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(t0, phi_des, plot_option)
 
 addpath(genpath('mice')); 
@@ -596,3 +834,135 @@ end
 %     psi_n = psi_np1; 
 %     
 % end 
+
+
+function [vd, va] = LAMBERTBATTIN_km_sun_June(rd, ra, dm, dt)
+% VALLADO BATTIN METHOD 
+
+% mu = 3.986004418e14;   % m3/s2
+mu_sun_m = 1.32712440018e20; 
+mu_sun_km = mu_sun_m / (1000^3); 
+mu = mu_sun_km; 
+
+% cos and sin dnu 
+ra_mag  = norm(ra);
+rd_mag  = norm(rd);
+cos_dnu = dot(rd,ra)/(rd_mag*ra_mag);
+dnu     = acos(cos_dnu); 
+sin_dnu = sin(dnu); 
+
+% the angle needs to be positive to work for the long way
+if dnu < 0.0
+    dnu = 2*pi + dnu;
+end
+
+% geometry 
+c   = sqrt( rd_mag^2 + ra_mag^2 - 2*rd_mag*ra_mag*cos_dnu ); 
+s   = ( rd_mag + ra_mag + c ) / 2; 
+eps = (ra_mag - rd_mag) / rd_mag; 
+
+% tan2w --> rdp 
+sqrt_rda = sqrt( ra_mag / rd_mag ); 
+tan22w    = ( eps^2/4 ) / ( sqrt_rda + sqrt_rda^2*( 2 + sqrt_rda ) ); 
+rdp      = sqrt( rd_mag*ra_mag ) * ( cos( dnu/4 )^2 + tan22w ); 
+
+% obtain L 
+if dnu < pi 
+    num = sin(dnu/4)^2 + tan22w; 
+    den = sin(dnu/4)^2 + tan22w + cos(dnu/2); 
+else
+    num = cos(dnu/4)^2 + tan22w - cos(dnu/2); 
+    den = cos(dnu/4)^2 + tan22w; 
+end 
+L = num / den; 
+
+m = mu * dt^2 / ( 8*rdp^3 ); 
+
+% orbit is elliptical 
+xn = L;
+eta = xn / ( sqrt( 1+xn ) + 1 )^2;  
+x = -xn; 
+
+i = 0; 
+% loop 
+while (1) 
+    
+    i = i + 1; 
+    
+    x = xn; 
+    
+    % omg crazy recursion in fraction denominator 
+    tempx = seebatt(x); 
+
+    % h1 
+    num = (L+x)^2 * (1 + 3*x + tempx); 
+    den = ( 1 + 2*x + L ) * ( 4*x + tempx*( 3+x ) ); 
+    h1  = num / den; 
+    
+    % h2 
+    num = m*(x - L + tempx); 
+    h2  = num / den; 
+    
+    % solve cubic y^3 - y^2 - h1*y^2 - h2 = 0 
+    rts = roots([1 -1 -h1 -h2]); 
+    
+    B = 27*h2 / ( 4*( 1 + h1 )^3 ); 
+    U = B / ( 2*( sqrt( 1+B ) + 1 ) ); 
+    
+    K = seebattk(U); 
+    y = (1 + h1)/3 * ( 2 + ( sqrt(1+B) )/( 1 + 2*U*K^2 ) ); 
+    xn = sqrt( ( (1-L)/2 )^2 + ( m/y^2 ) ) - (1+L)/2; 
+    
+    if abs(xn - x) < 0.000001 && i > 30
+        break 
+    end 
+        
+end 
+
+% semi-major axis!!! 
+a = mu_sun_km*dt^2 / ( 16 * rdp^2 * x * y^2 ); 
+
+if a > 0 
+    
+    % obtain f, g, and dg 
+    alpha = 2 * asin( sqrt( s/(2*a) ) ); 
+    beta  = 2 * asin( sqrt( (s-c)/(2*a) ) ); 
+    
+    % min 
+    amin = s / 2; 
+    tmin = sqrt( amin^3/mu_sun_km ) * ( pi - beta + sin(beta) ); 
+    if dt > tmin 
+        alpha = 2*pi - alpha; 
+    end 
+    de    = alpha - beta; 
+    
+    f  = 1 - a/rd_mag * ( 1 - cos(de) ); 
+    g  = dt - sqrt( a^3/mu_sun_km ) * ( de - sin(de) ); 
+    dg = 1 - a/ra_mag * ( 1 - cos(de) ); 
+
+else
+    
+    disp('oh no') 
+    
+end 
+
+% velocities!! 
+vd = (ra - f*rd) / g; 
+va = (dg*ra - rd) / g; 
+
+end 
+	
+	
+	
+	
+\end{lstlisting}
+
+
+
+
+
+% ================================================================ % 
+
+% \bibliography{sample}
+
+\end{document}

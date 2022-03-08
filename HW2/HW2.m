@@ -8,10 +8,11 @@ clear;
 
 %  Define parameters for a state lookup:
 % t0      = 'Oct 20, 2020 11:00 AM CST'; 
-t0      = 'May 22, 1980'; 
+t0      = 'May 22, 1950'; 
 
-phi_t_des = 165; 
-lambert_prob(t0, phi_t_des, 1); 
+phi_t_des = 180; 
+[ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(t0, phi_t_des, 1); 
+
 
 %% phi = 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180 degrees
 
@@ -88,7 +89,7 @@ figure()
 
     sgtitle('Min Energy Parameters') 
 
-
+%% save plots 
 
 
 

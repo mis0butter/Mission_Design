@@ -1,4 +1,5 @@
 function [vd, va] = LAMBERTBATTIN_km_sun_June(rd, ra, dm, dt)
+% VALLADO BATTIN METHOD 
 
 % mu = 3.986004418e14;   % m3/s2
 mu_sun_m = 1.32712440018e20; 
