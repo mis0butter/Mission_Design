@@ -1,4 +1,48 @@
 %% RIGHT HERE 
+function [ell_1_min, ell_2_min] = lambert_prob(t0, phi_des, plot_option)
+
+addpath(genpath('mice')); 
+addpath(genpath('spice_data')); 
+
+%  Load kernel file 
+cspice_furnsh( 'spice_data/naif0011.tls' )
+cspice_furnsh( 'spice_data/de421.bsp' )       
+cspice_furnsh( 'spice_data/pck00010.tpc ') 
+
+abcorr  = 'NONE';
+
+%  Convert the epoch to ephemeris time (secs) 
+et_t0   = cspice_str2et( t0 );
+
+% get states --> Sun to Earth 
+target   = 'Earth';
+frame    = 'J2000';
+observer = 'Sun';
+abcorr   = 'NONE';
+
+% get sun position 
+et = et_t0;    % propagate ephemeris time by 1 day in secs 
+X_sunE  = spice_state(et, target, frame, abcorr, observer); 
+
+% get states --> Sun to Mars
+target   = 'Mars';
+frame    = 'J2000';
+observer = 'Sun';
+abcorr   = 'NONE';
+
+% get sun position 
+et = et_t0;    % propagate ephemeris time by 1 day in secs 
+X_sunM  = spice_state(et, target, frame, abcorr, observer); 
+
+% get angle between Earth and Mars velocities 
+r_E = X_sunE(1:3); 
+r_M = X_sunM(1:3); 
+v_E = X_sunE(4:6); 
+v_M = X_sunM(4:6); 
+
+% angle and velocity angles 
+phi_r = acosd( dot(r_E, r_M) / (norm(r_E)*norm(r_M)) ); 
+phi_v = acosd( dot(v_E, v_M) / (norm(v_E)*norm(v_M)) ); 
 
 i = 0; 
 while abs(phi_r - phi_des) > 0.01
@@ -111,40 +155,46 @@ a_hist_AU     = a_hist / km2AU;
 
 %% plot 
 
-fname = 'Ellipse 1 and 2 TOF and Angles'; 
-pos = [100 100 700 700]; 
-figure('name', fname, 'position', pos)
-    subplot(3,1,1)
-        plot(a_hist_AU, ell_1_hist.dt_s); hold on; 
-        plot(a_hist_AU, ell_1_hist.dt_l); hold on; 
-        plot(a_hist_AU, ell_2_hist.dt_s); hold on; 
-        plot(a_hist_AU, ell_2_hist.dt_l); hold on; 
-        legend('ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
-        ylabel('TOF (days)') 
-        title('a vs. TOF') 
-    subplot(3,1,2) 
-        plot(a_hist_AU, ell_1_hist.phi_ds); hold on; 
-        plot(a_hist_AU, ell_1_hist.phi_dl); 
-        plot(a_hist_AU, ell_2_hist.phi_ds); 
-        plot(a_hist_AU, ell_2_hist.phi_dl); 
-        legend('ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside')
-        title('Ellipses 1 and 2: a vs. departure angles'); 
-        ylabel('deg') 
-    subplot(3,1,3) 
-        plot(a_hist_AU, ell_1_hist.phi_as); hold on; 
-        plot(a_hist_AU, ell_1_hist.phi_al); 
-        plot(a_hist_AU, ell_2_hist.phi_as); 
-        plot(a_hist_AU, ell_2_hist.phi_al); 
-        legend('ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside')
-        title('Ellipses 1 and 2: a vs. arrival angles'); 
-        ylabel('deg') 
-        xlabel('a (AU)'); 
-        
-    sgtitle(['Lambert Problem: \phi = ' num2str(phi_des) ' deg'])
+if plot_option > 0 
+    
+    fname = 'Ellipse 1 and 2 TOF and Angles'; 
+    pos = [100 100 700 700]; 
+    figure('name', fname, 'position', pos)
+        subplot(3,1,1)
+            plot(a_hist_AU, ell_1_hist.dt_s); hold on; 
+            plot(a_hist_AU, ell_1_hist.dt_l); hold on; 
+            plot(a_hist_AU, ell_2_hist.dt_s); hold on; 
+            plot(a_hist_AU, ell_2_hist.dt_l); hold on; 
+            legend('ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+            ylabel('TOF (days)') 
+            title('a vs. TOF') 
+        subplot(3,1,2) 
+            plot(a_hist_AU, ell_1_hist.phi_ds); hold on; 
+            plot(a_hist_AU, ell_1_hist.phi_dl); 
+            plot(a_hist_AU, ell_2_hist.phi_ds); 
+            plot(a_hist_AU, ell_2_hist.phi_dl); 
+            legend('ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside')
+            title('Ellipses 1 and 2: a vs. departure angles'); 
+            ylabel('deg') 
+        subplot(3,1,3) 
+            plot(a_hist_AU, ell_1_hist.phi_as); hold on; 
+            plot(a_hist_AU, ell_1_hist.phi_al); 
+            plot(a_hist_AU, ell_2_hist.phi_as); 
+            plot(a_hist_AU, ell_2_hist.phi_al); 
+            legend('ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside')
+            title('Ellipses 1 and 2: a vs. arrival angles'); 
+            ylabel('deg') 
+            xlabel('a (AU)'); 
+
+        sgtitle(['Lambert Problem: \phi = ' num2str(phi_des) ' deg'])
+    
+end 
 
 % [V1, V2] = LAMBERTBATTIN(rd, ra, 'retro', tof); 
 
 %% propagate orbits 
+
+if plot_option > 0 
 
 a_ind = 160; 
 
@@ -186,15 +236,20 @@ figure('name', fname, 'position', pos)
         plot_probe(rv_hist, X_sunE_hist, X_sunM_hist, rd_E, ra_M, ftitle) 
 
     sgtitle(['Lambert Problem: \phi = ' num2str(phi_des) ' deg'])
+    
+end 
 
-%% Part 1b 
-% minimum energy transfer orbit 
+%% minimum energy transfer orbit 
 
 pmin = rd_mag*ra_mag/c * (1 - cosd(phi_r)); 
 
 emin = sqrt( 1 - 2*pmin/s ); 
 
 sprintf('a_min = %.5g AU, e_min = %.5g', amin, emin)
+
+[ell_1_min, ell_2_min] = a2tof(s, c, amin, rd_E, ra_M, vd_E, va_M); 
+
+end 
 
 
 %% subfunctions 
@@ -216,8 +271,7 @@ function plot_probe(rv_hist, X_sunE_hist, X_sunM_hist, rd_E, ra_M, ftitle)
 
 end 
 
-function [rv_hist, oe_hist] = prop_probe ... 
-    (ell_x_hist, rd, ra, dt_str, a_ind)
+function [rv_hist, oe_hist] = prop_probe (ell_x_hist, rd, ra, dt_str, a_ind)
 
     % probe orbit (min energy) 
     if strcmp(dt_str, 'short')
@@ -286,8 +340,10 @@ function [ell_1, ell_2] = a2tof(s, c, a, rd, ra, vd_E, va_M)
 % Outputs: 
 %   ellipse 1 
 %   ellipse 2 
-%       containing: 
+%       each containing: 
 %           TOF for short and long 
+%           departure velocities for short and long 
+%           arrival velocities for short and long 
 %           departure angles for short and long 
 %           arrival angles for short and long 
 % ------------------------------------------------------------------------
@@ -330,90 +386,13 @@ ra_mag = norm(ra);
 dnu = acos( dot(rd, ra) / ( rd_mag*ra_mag ) ); 
 de = alpha1 - beta1; 
 
-% compute velocities - Bettadpur and Vallado combination 
-% n  = @(alpha1, beta1, dt1_s) ...  
-%         (alpha1 - beta1) - 2*cos( (alpha1+beta1)/2 )*sin( (alpha1-beta1)/2 ); 
-% f  = @(alpha1, beta1) ... 
-%         1 - a/rd_mag * ( 1 - cos(alpha1 - beta1) ); 
-% g  = @(alpha1, beta1, dt1_s) ... 
-%         dt1_s - 1/n(alpha1, beta1, dt1_s) * ( de - sin(alpha1 - beta1) ); 
-% 
-% K  = 4*a/c^2 * ( 1/2*(rd_mag+ra_mag+c) - rd_mag ) * ( 1/2*(rd_mag+ra_mag+c) - ra_mag ); 
-% p1 = @(alpha1, beta1) ... 
-%         K * sin( (alpha1+beta1)/2 )^2; 
-% p2 = @(alpha1, beta1) ... 
-%         K * sin( (alpha1-beta1)/2 )^2; 
-% 
-% dg = @(alpha1, beta1, p1) ... 
-%         1 - rd_mag/p1(alpha1, beta1) * ( 1-cos(dnu) ); 
-% vd1_s = ( ra - f(alpha1, beta1)*rd ) / ... 
-%             g(alpha1, beta1, dt1_s);
-% vd1_l = - vd1_s; 
-% vd2_s = ( ra - f(alpha2, beta2)*rd ) / ... 
-%             g(alpha2, beta2, dt2_s);
-% vd2_l = - vd2_s; 
+% commented out failed velocity code 
 
-
-% va2_s = ( dg(alpha2, beta2, p2)*ra - rd ) / ... 
-%             g(alpha2, beta2, dt2_s); 
-% vd2_l = ( ra - f(alpha2, beta2)*rd ) / ... 
-%             g(alpha2, beta2, dt2_l);
-% va2_l = ( dg(alpha2, beta2, p2)*ra - rd ) / ... 
-%             g(alpha2, beta2, dt2_l); 
-
-% Gauss solution 
-% [vd1_s_gauss, va1_s_gauss] = lambert_gauss(rd, ra, dt1_s, mu_sun_km, de); 
-% [vd1_l_gauss, va1_l_gauss] = lambert_gauss(rd, ra, dt1_l, mu_sun_km, de); 
-% [vd2_s_gauss, va2_s_gauss] = lambert_gauss(rd, ra, dt2_s, mu_sun_km, de); 
-% [vd2_l_gauss, va2_l_gauss] = lambert_gauss(rd, ra, dt2_l, mu_sun_km, de); 
-
-% Universal variables 
-% A = sqrt(ra_mag*rd_mag)*sin(dnu) / ( sqrt( 1 - cos(dnu) ) ); 
-% psi_n = 0; 
-% c2 = 1/2; 
-% c3 = 1/6; 
-% psi_up  = 4*pi^2; 
-% psi_low = -4*pi; 
-% 
-% dtn = 1; 
-% while abs( dtn - dt1_s ) > 0.01
-%     
-%     yn = rd_mag + ra_mag + A*(psi_n*c3 - 1)/sqrt(c2); 
-%     if A > 0 && yn < 0 
-%         psi_low = psi_low + 0.01; 
-%     end 
-%     
-%     xn = sqrt(yn/c2); 
-%     dtn = (xn^3*c3 + A*sqrt(yn)) / (sqrt(mu_sun_km)); 
-%     
-%     if dtn < dt1_s
-%         psi_n = psi_low; 
-%     else
-%         psi_n = psi_up; 
-%     end 
-%     
-%     psi_np1 = (psi_up + psi_low)/2; 
-%     
-%     % find c2 and c3 
-%     
-%     psi_n = psi_np1; 
-%     
-% end 
-
-% June test 
+% June Battin 
 [vd1_s, va1_s] = LAMBERTBATTIN_km_sun_June(rd, ra, 'pro', dt1_s); 
 [vd1_l, va1_l] = LAMBERTBATTIN_km_sun_June(rd, ra, 'pro', dt1_l); 
 [vd2_s, va2_s] = LAMBERTBATTIN_km_sun_June(rd, ra, 'pro', dt2_s); 
 [vd2_l, va2_l] = LAMBERTBATTIN_km_sun_June(rd, ra, 'pro', dt2_l); 
-
-% % Battin solution 
-% % ellipse 1, long and short 
-% [vd1_s, va1_s] = LAMBERTBATTIN_km_sun(rd, ra, 'pro', dt1_s); 
-% [vd1_l, va1_l] = LAMBERTBATTIN_km_sun(rd, ra, 'pro', dt1_l); 
-%  
-% % ellipse 2, long and short 
-% [vd2_s, va2_s] = LAMBERTBATTIN_km_sun(rd, ra, 'pro', dt2_s); 
-% [vd2_l, va2_l] = LAMBERTBATTIN_km_sun(rd, ra, 'pro', dt2_l); 
 
 ell_1.vd_s = vd1_s; 
 ell_1.va_s = va1_s; 
@@ -522,9 +501,9 @@ function E = kepler(M, e)
     E = fzero(f, M);  % <-- I would use M as the initial guess instead of 0
 end
 
-% 
+%% annotation 
 
-function h2_text(h2, text1, text2, text3, text4) 
+function h_text(h2, text1, text2, text3, text4) 
 
     pos = get(h2, 'position');     
     delete(findall(gcf,'type','annotation')); 
@@ -536,3 +515,83 @@ function h2_text(h2, text1, text2, text3, text4)
 
 end 
 
+%% commented out failed velocity code 
+
+% % Battin solution (definitely works) 
+% % ellipse 1, long and short 
+% [vd1_s, va1_s] = LAMBERTBATTIN_km_sun(rd, ra, 'pro', dt1_s); 
+% [vd1_l, va1_l] = LAMBERTBATTIN_km_sun(rd, ra, 'pro', dt1_l); 
+%  
+% % ellipse 2, long and short 
+% [vd2_s, va2_s] = LAMBERTBATTIN_km_sun(rd, ra, 'pro', dt2_s); 
+% [vd2_l, va2_l] = LAMBERTBATTIN_km_sun(rd, ra, 'pro', dt2_l); 
+% 
+% compute velocities - Bettadpur and Vallado combination 
+% n  = @(alpha1, beta1, dt1_s) ...  
+%         (alpha1 - beta1) - 2*cos( (alpha1+beta1)/2 )*sin( (alpha1-beta1)/2 ); 
+% f  = @(alpha1, beta1) ... 
+%         1 - a/rd_mag * ( 1 - cos(alpha1 - beta1) ); 
+% g  = @(alpha1, beta1, dt1_s) ... 
+%         dt1_s - 1/n(alpha1, beta1, dt1_s) * ( de - sin(alpha1 - beta1) ); 
+% 
+% K  = 4*a/c^2 * ( 1/2*(rd_mag+ra_mag+c) - rd_mag ) * ( 1/2*(rd_mag+ra_mag+c) - ra_mag ); 
+% p1 = @(alpha1, beta1) ... 
+%         K * sin( (alpha1+beta1)/2 )^2; 
+% p2 = @(alpha1, beta1) ... 
+%         K * sin( (alpha1-beta1)/2 )^2; 
+% 
+% dg = @(alpha1, beta1, p1) ... 
+%         1 - rd_mag/p1(alpha1, beta1) * ( 1-cos(dnu) ); 
+% vd1_s = ( ra - f(alpha1, beta1)*rd ) / ... 
+%             g(alpha1, beta1, dt1_s);
+% vd1_l = - vd1_s; 
+% vd2_s = ( ra - f(alpha2, beta2)*rd ) / ... 
+%             g(alpha2, beta2, dt2_s);
+% vd2_l = - vd2_s; 
+
+
+% va2_s = ( dg(alpha2, beta2, p2)*ra - rd ) / ... 
+%             g(alpha2, beta2, dt2_s); 
+% vd2_l = ( ra - f(alpha2, beta2)*rd ) / ... 
+%             g(alpha2, beta2, dt2_l);
+% va2_l = ( dg(alpha2, beta2, p2)*ra - rd ) / ... 
+%             g(alpha2, beta2, dt2_l); 
+
+% Gauss solution 
+% [vd1_s_gauss, va1_s_gauss] = lambert_gauss(rd, ra, dt1_s, mu_sun_km, de); 
+% [vd1_l_gauss, va1_l_gauss] = lambert_gauss(rd, ra, dt1_l, mu_sun_km, de); 
+% [vd2_s_gauss, va2_s_gauss] = lambert_gauss(rd, ra, dt2_s, mu_sun_km, de); 
+% [vd2_l_gauss, va2_l_gauss] = lambert_gauss(rd, ra, dt2_l, mu_sun_km, de); 
+
+% Universal variables 
+% A = sqrt(ra_mag*rd_mag)*sin(dnu) / ( sqrt( 1 - cos(dnu) ) ); 
+% psi_n = 0; 
+% c2 = 1/2; 
+% c3 = 1/6; 
+% psi_up  = 4*pi^2; 
+% psi_low = -4*pi; 
+% 
+% dtn = 1; 
+% while abs( dtn - dt1_s ) > 0.01
+%     
+%     yn = rd_mag + ra_mag + A*(psi_n*c3 - 1)/sqrt(c2); 
+%     if A > 0 && yn < 0 
+%         psi_low = psi_low + 0.01; 
+%     end 
+%     
+%     xn = sqrt(yn/c2); 
+%     dtn = (xn^3*c3 + A*sqrt(yn)) / (sqrt(mu_sun_km)); 
+%     
+%     if dtn < dt1_s
+%         psi_n = psi_low; 
+%     else
+%         psi_n = psi_up; 
+%     end 
+%     
+%     psi_np1 = (psi_up + psi_low)/2; 
+%     
+%     % find c2 and c3 
+%     
+%     psi_n = psi_np1; 
+%     
+% end 
