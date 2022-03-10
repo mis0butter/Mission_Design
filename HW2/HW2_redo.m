@@ -42,10 +42,10 @@ Mars.dOmega = -0.29257343;
 %% Try Future Earth 
 
 % 0 = no plot. 1 = plot during sim. 2 = plot after sim 
-plot_option = 0; 
+plot_option = 2; 
 
 % desired transfer angle (deg)
-phi = 75; 
+phi_des = 165; 
 
 % Departure (Earth), AU units, frame = J2000
 T0     = 2451545.0; % units = days 
@@ -66,10 +66,10 @@ if plot_option > 0
     figure('position', pos)
     h1 = subplot(3,1,1:2); 
         quiver3(0, 0, 0, rd(1), rd(2), rd(3), 'b'); hold on; 
-        l1 = plot3( [0 rd(1)], [0 rd(2)], [0 rd(3)], 'b^'); 
+        l1 = plot3( [0 rd(1)], [0 rd(2)], [0 rd(3)], 'bo'); 
         l2 = quiver3(0, 0, 0, ra(1), ra(2), ra(3), 'r'); 
         l3 = scatter3(0, 0, 0, 80, 'filled', 'k'); 
-        l4 = plot3( ra(1), ra(2), ra(3), 'r^'); 
+        l4 = plot3( ra(1), ra(2), ra(3), 'ro'); 
         hleg = [l1 l2 l3 l4]; 
         legend(hleg, 'Earth_{td}', 'Mars', 'Sun', 'Mars_{td}', 'AutoUpdate', 'off'); 
         xlabel('x (AU)'); ylabel('y (AU)'); zlabel('z (AU)'); 
@@ -83,53 +83,47 @@ if plot_option > 0
 
 end 
     
-
-while abs(phi - 75) > 0.01
+i = 0; 
+if phi > phi_des 
+    si = 1; 
+else
+    si = -1; 
+end 
+    
+phi_hist = phi; 
+while abs(phi - phi_des) > 0.1
 % while i < 687 
-
-    i = i + 0.001; 
+    
+    i = i + si*0.001; 
     
     % find orbit normal for Earth and Mars transfer (using random Mars vector) 
     tof  = i;       % units = days 
     Teph = T0 + tof; 
     ra   = xyz_ecl(Teph, Mars); 
-    phi  = acosd( dot(rd, ra) / (norm(rd)*norm(ra)) ); 
+    phi = acosd( dot(rd, ra) / (norm(rd)*norm(ra)) ); 
     
     % save ra hist 
     ra_hist = [ra_hist; ra']; 
-    
-    % plot 
-    if plot_option == 1
-        axes(h1); 
-            quiver3(0, 0, 0, ra(1), ra(2), ra(3), 'r'); 
-            pause(0.001); 
-        axes(h2); 
-            text3 = sprintf('Transfer angle (Earth_{td} to Mars_{ta})= %.5g', phi);
-            text4 = sprintf('days = %.3g', tof); 
-            h2_text(h2, text1, text2, text3, text4); 
-    end 
+    phi_hist = [phi_hist; phi]; 
 
 end 
 
 if plot_option == 2 
     
-    zn = zeros(size(ra_hist)); 
+    zn = zeros(length(ra_hist), 1); 
     axes(h1); 
-        quiver3(zn(:,1), zn(:,2), zn(:,3), ra_hist(:,1), ra_hist(:,2), ra_hist(:,3), 'r'); 
-    
+%         quiver3(zn(:,1), zn(:,2), zn(:,3), ra_hist(:,1), ra_hist(:,2), ra_hist(:,3), 'r'); 
+        plot3([zn ra_hist(:,1)], [zn ra_hist(:,2)], [zn ra_hist(:,3)], 'r'); 
+        l5 = plot3( ra(1), ra(2), ra(3), 'r^'); 
+        quiver3(0, 0, 0, ra(1), ra(2), ra(3), 'r'); 
+        hleg = [ l1(1), l2(1), l3(1), l4(1), l5(1) ]; 
+        legend(hleg, 'Earth_{td}', 'Mars', 'Sun', 'Mars_{td}', 'Mars_{ta}'); 
+        
     axes(h2); 
         text3 = sprintf('Transfer angle (Earth_{td} to Mars_{ta})= %.5g', phi);
         text4 = sprintf('days = %.3g', tof); 
         h2_text(h2, text1, text2, text3, text4); 
     
-end 
-
-if plot_option > 1 
-% plot final mars position 
-    axes(h1); 
-        l5 = plot3( ra(1), ra(2), ra(3), 'rp'); 
-        hleg = [ l1(1), l2(1), l3(1), l4(1), l5(1) ]; 
-        legend(hleg, 'Earth_{td}', 'Mars', 'Sun', 'Mars_{td}', 'Mars_{ta}'); 
 end 
 
 % how many years? 

@@ -8,10 +8,61 @@ clear;
 
 %  Define parameters for a state lookup:
 % t0      = 'Oct 20, 2020 11:00 AM CST'; 
-t0      = 'May 22, 2020'; 
+t0      = 'May 22, 1950'; 
 
-phi_t_des = 75; 
-[ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(t0, phi_t_des, 1); 
+%  Convert the epoch to ephemeris time (secs) 
+et_t0   = cspice_str2et( t0 );
+
+% get states --> Sun to Earth 
+target   = 'Earth';
+frame    = 'J2000';
+observer = 'Sun';
+abcorr   = 'NONE';
+
+% get sun position 
+et = et_t0;    % propagate ephemeris time by 1 day in secs 
+X_sunE  = spice_state(et, target, frame, abcorr, observer); 
+
+% get states --> Sun to Mars
+target   = 'Mars';
+frame    = 'J2000';
+observer = 'Sun';
+abcorr   = 'NONE';
+
+% propagate to get full Earth orbit 
+X_sunE_hist = []; 
+target   = 'Earth';
+for i = 0 : 0.01 : 365+1
+    
+    et = et_t0 + i*86400; 
+    
+    % get state 
+    X_sunE  = spice_state(et, target, frame, abcorr, observer); 
+    
+    % save Mars vector 
+    X_sunE_hist = [X_sunE_hist; X_sunE]; 
+end 
+
+% propagate to get full Mars orbit 
+X_sunM_hist = []; 
+target   = 'Mars';
+for i = 0 : 0.001 : 687+1
+    
+    et = et_t0 + i*86400; 
+    
+    % get state 
+    X_sunM  = spice_state(et, target, frame, abcorr, observer); 
+    
+    % save Mars vector 
+    X_sunM_hist = [X_sunM_hist; X_sunM]; 
+end 
+
+
+%% 
+
+phi_t_des = 179.9; 
+[ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob_geometric ... 
+    (X_sunE_hist, X_sunM_hist, phi_t_des, 1)
 
 
 %% phi = 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180 degrees
@@ -22,7 +73,7 @@ tof_hist = [];
 phi_t_hist = []; 
 
 phi0 = 15; 
-for phi = [ phi0 : 15 : 165, 179] 
+for phi = phi0 : 15 : 180 
     
     phi_t_des = phi; 
     [ell_1_min, ell_2_min] = lambert_prob(t0, phi_t_des, 0); 
@@ -45,8 +96,10 @@ for phi = [ phi0 : 15 : 165, 179]
     % transfer angle 
     phi_t_hist = [phi_t_hist; phi_t_des]; 
         
+    
 end 
 
+%%
 
 colors = {'k', 'b', 'r', 'g'}; 
 style = {'p', '^', '--', '.'}; 
@@ -84,11 +137,12 @@ figure()
         legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
         
     xlabel('Transfer Angle Phi (deg)') 
+
     sgtitle('Min Energy Parameters') 
 
 %% save plots 
 
-% savePDF(gcf, get(gcf, 'name'), 'HW2/latex')
+
 
 
 

@@ -1,362 +1,125 @@
-\documentclass[conf]{new-aiaa}
-%\documentclass[journal]{new-aiaa} for journal papers
-\usepackage[utf8]{inputenc}
-
-\usepackage{graphicx}
-\usepackage{amsmath}
-\usepackage{commath}
-\usepackage[version=4]{mhchem}
-\usepackage{siunitx}
-\usepackage{longtable,tabularx}
-\usepackage{float}
-\usepackage{listings}
-\usepackage{pdfpages}
-\usepackage{color} %red, green, blue, yellow, cyan, magenta, black, white
-\definecolor{mygreen}{RGB}{28,172,0} % color values Red, Green, Blue
-\definecolor{mylilas}{RGB}{170,55,241}
-\setlength\LTleft{0pt} 
-
-\lstset{language=Matlab,%
-	basicstyle=\footnotesize,
-	breaklines=true,%
-	morekeywords={matlab2tikz},
-	keywordstyle=\color{blue},%
-	morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
-	identifierstyle=\color{black},%
-	stringstyle=\color{mylilas},
-	commentstyle=\color{mygreen},%
-	showstringspaces=false,%without this there will be a symbol in the places where there is a space
-	numbers=left,%
-	numberstyle={\tiny \color{black}},% size of the numbers
-	numbersep=9pt, % this defines how far the numbers are from the text
-	emph=[1]{for,end,break},emphstyle=[1]\color{red}, %some words to emphasise
-	%emph=[2]{word1,word2}, emphstyle=[2]{style},    
-}
-
-% ================================================================ % 
-\title{ASE387P.2 Mission Analysis and Design \\ Homework 2}
-
-\author{Junette Hsin}
-\affil{Masters Student, Aerospace Engineering and Engineering Mechanics, University of Texas, Austin, TX 78712}
-
-\begin{document}
-
-\maketitle
-
-% \begin{abstract}
-
-	% The theory and algorithms are derived and computer program to establish the trajectory of
-	% an Earth-orbiting satellite is developed. The assumptions for the study are ...
-
-% \end{abstract}
-
-\newpage 
-% ================================================================ % 
-\section*{Problem 1}
-
-% Statement 
-Consider the possible transfer orbits from Earth to
-Mars. Assume both planets are in coplanar circular heliocentric orbits. Consider a transfer
-angle of 75°. 
-
-% 1.a 
-\subsection*{A}
-
-Choose a range of semi-major axes up to a distance of 2 A.U. and draw a plot (to
-scale) of the semi-major axes (X-axis) versus time-of-flight (Y-axis) of the
-transfer orbit. Note that there are two possible times for flight for each transfer
-orbit semi-major axis – the short-way and the long-way.
-
-\subsubsection*{Solution}
-
-\begin{figure}[H]
-	\centering 
-	\includegraphics[width=0.8\textwidth]{phi75_Ellipse 1 and 2 TOF and Angles.pdf}
-	\caption{TOF and Departure/Arrival Angles vs. a}
-	\label{fig:TOF_angles_a}
-\end{figure}
+%% RIGHT HERE 
+function [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob_geometric ... 
+    (X_sunE_hist, X_sunM_hist, phi_des, plot_option)
 
 
+%% get vectors for transfer angle 
 
-\begin{figure}[H]
-	\centering 
-	\includegraphics[width=0.8\textwidth]{orbits_Ellipse 1 and 2, Short and Long.pdf}
-	\caption{Visualization of Transfer Orbits}
-	\label{fig:transfer_orbits}
-\end{figure}
+% Earth 
+Earth.a0 =      1.00000261; 
+Earth.da =      0.00000562; 
+Earth.e0 =      0.01671123; 
+Earth.de =     -0.00004392; 
+Earth.I0 =     -0.00001531; 
+Earth.dI =     -0.01294668;
+Earth.L0 =    100.46457166; 
+Earth.dL =  35999.37244981; 
+Earth.wbar0 = 102.93768193; 
+Earth.dwbar =   0.32327364;
+Earth.Omega0 =  0; 
+Earth.dOmega =  0; 
 
-(Bonus) Figure \ref{fig:transfer_orbits} visualizes the transfer orbits for both ellipses. The red orbit represents Mars and the blue orbit represents Earth. The green circles indicate the initial departure position and the green triangles indicate the final arrival position. The green lines map out the trajectory of the probe on its path to Mars. 
+% Mars 
+Mars.a0 =      1.52371034; 
+Mars.da =      0.00001847; 
+Mars.e0 =      0.09339410; 
+Mars.de =      0.00007882; 
+Mars.I0 =      1.84969142; 
+Mars.dI =     -0.00813131; 
+Mars.L0 =     -4.55343205; 
+Mars.dL =  19140.30268499; 
+Mars.wbar0 = -23.94362959; 
+Mars.dwbar =   0.44441088; 
+Mars.Omega0 = 49.55953891; 
+Mars.dOmega = -0.29257343; 
 
-% 1.b 
-\subsection*{B}
-What is the value of the semi-major axis and eccentricity for the minimum energy
-transfer orbit?
+% desired transfer angle (deg)
+phi = 75; 
 
-\subsubsection*{Solution}
+% Departure (Earth), AU units, frame = J2000
+T0     = 2451545.0; % units = days 
+rd     = xyz_ecl(T0, Earth); 
+rd_mag = norm(rd); 
+rd_unit = rd / rd_mag; 
 
-$A_{min}$ = 0.97301 AU and $e_{min}$ = 0.53129. 
+% initial Mars vector 
+ra   = xyz_ecl(T0, Mars); 
+ra_hist = ra'; 
 
-% 1.c 
-\subsection*{C}
-For the given transfer angle and for any chosen semi-major axis, at the departure
-and arrival points, calculate the angles between the velocity of the probe and the
-velocity of the departure and arrival planets, respectively. Let us call these
-“departure angle” and “arrival angle” – this may be non-standard terminology.
-We have two of each – one for short-way travel and another for long-way travel.
+% initialize 
+phi = acosd( dot(rd, ra) / (norm(rd)*norm(ra)) ); 
+i   = 0; 
 
-\subsubsection*{Solution}
+if plot_option > 0 
+    pos = [100 100 800 600]; 
+    figure('position', pos)
+    h1 = subplot(3,1,1:2); 
+        quiver3(0, 0, 0, rd(1), rd(2), rd(3), 'b'); hold on; 
+        l1 = plot3( [0 rd(1)], [0 rd(2)], [0 rd(3)], 'b^'); 
+        l2 = quiver3(0, 0, 0, ra(1), ra(2), ra(3), 'r'); 
+        l3 = scatter3(0, 0, 0, 80, 'filled', 'k'); 
+        l4 = plot3( ra(1), ra(2), ra(3), 'r^'); 
+        hleg = [l1 l2 l3 l4]; 
+        legend(hleg, 'Earth_{td}', 'Mars', 'Sun', 'Mars_{td}', 'AutoUpdate', 'off'); 
+        xlabel('x (AU)'); ylabel('y (AU)'); zlabel('z (AU)'); 
+        title('J2000 ecliptic plane'); 
+    h2 = subplot(3,1,3); 
+        text1 = sprintf( 'Initial angle (Earth_{td} to Mars_{td}) = %.5g deg', phi ); 
+        text2 = sprintf( 'Initial T_{eph} (td) = %d days', T0 ) ; 
+        text3 = ''; 
+        text4 = ''; 
+        h2_text(h2, text1, text2, text3, text4); 
 
-Please see Figure \ref{fig:TOF_angles_a}. The Battin Method from Vallado (Fundamentals of Astrodynamics and Applications, ed. 4) was used to calculate the velocity vectors and angles for the departure and arrival positions. 
-
-% 1.d 
-\subsection*{D}
-Plot the departure and arrival angles for this case as a function of the transfer orbit
-semi-major axis.
-
-\subsubsection*{Solution}
-
-Please see Figure \ref{fig:TOF_angles_a}. 
-
-% 1.e 
-\subsection*{E}
-Discuss the significance of these plots for decision-making on the choice of semimajor axes for the fixed transfer angle.
-
-\subsubsection*{Solution}
-
-Lower departure and arrival angles may be desirable for a mission, as the delta-V required to enable capture by the destination planet's gravity would be lower. Balancing the desirability of a spacecraft orbit versus costs such as fuel expenditure needs to be evaluated.  
-
-
-% \newpage 
-% ================================================================ % 
-\section*{Problem 2}
-
-Repeat Problem 1 for 15° increments of the transfer angle, that is for [15, 30,45, 60, 75,
-90, 105, 120, 135, 150, 165, 180] degrees.
-
-% 2.a 
-\subsection*{A}
-Plot the departure angle, the arrival angle, and the time-of-flight for the minimum
-energy transfer orbit as a function of the transfer angle.
-
-\subsubsection*{Solution}
-
-\begin{figure}[H]
-	\centering 
-	\includegraphics[width=0.8\textwidth]{phi15_180.pdf}
-	\caption{Departure Angle, Arrival Angle, and TOF for Phi = 15 through 180 deg}
-	\label{fig:phi_15_180}
-\end{figure}
-
-
-% 2.b 
-\subsection*{B}
-Discuss the significance of these plots for decision-making on the choice of
-transfer angle and the semi-major axes of the transfer orbit.
-
-\subsubsection*{Solution}
-
-Lower departure and arrival angles may be desirable for a mission, as the delta-V required to enable capture by the destination planet's gravity would be lower. 
-
-
-\newpage
-% ================================================================ % 
-\section*{Appendix} 
-
-\subsection*{MATLAB code} 
-
-\begin{lstlisting}
-	%% HW 2 
-	% Junette Hsin 
-	
-	% close all; 
-	clear; 
-	
-	%% transfer angle = 75 deg 
-	
-	%  Define parameters for a state lookup:
-	% t0      = 'Oct 20, 2020 11:00 AM CST'; 
-	t0      = 'May 22, 1950'; 
-	
-	phi_t_des = 180; 
-	[ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(t0, phi_t_des, 1); 
-	
-	
-	%% phi = 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180 degrees
-	
-	phi_d_hist  = []; 
-	phi_a_hist  = []; 
-	tof_hist = []; 
-	phi_t_hist = []; 
-	
-	phi0 = 15; 
-	for phi = phi0 : 15 : 180 
-		
-		phi_t_des = phi; 
-		[ell_1_min, ell_2_min] = lambert_prob(t0, phi_t_des, 0); 
-		
-		% departure angle: 
-		% (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
-		phi_d_hist = [phi_d_hist; ... 
-			ell_1_min.phi_ds, ell_1_min.phi_dl, ell_2_min.phi_ds, ell_2_min.phi_dl]; 
-	
-		% arrival angle 
-		% (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
-		phi_a_hist = [phi_a_hist; ... 
-			ell_1_min.phi_as, ell_1_min.phi_al, ell_2_min.phi_as, ell_2_min.phi_al]; 
-	
-		% time of flight 
-		% (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
-		tof_hist = [tof_hist; ... 
-			ell_1_min.dt_s, ell_1_min.dt_l, ell_2_min.dt_s, ell_2_min.dt_l]; 
-	
-		% transfer angle 
-		phi_t_hist = [phi_t_hist; phi_t_des]; 
-			
-		
-	end 
-	
-	%%
-	
-	colors = {'k', 'b', 'r', 'g'}; 
-	style = {'p', '^', '--', '.'}; 
-	lwidth = [3, 1.5, 1, 1]; 
-	
-	figure()
-		subplot(3,1,1) 
-			hold on;
-			for i = 1:4
-	%             scatter(phi_t_hist, phi_d_hist(:,i), 4, colors{i});  
-				h(i) = plot(phi_t_hist, phi_d_hist(:,i), [colors{i} style{i}]); 
-			end 
-			title('Departure Angle')
-			ylabel('deg') 
-			legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
-		
-		subplot(3,1,2) 
-			hold on;
-			for i = 1:4
-	%             scatter(phi_t_hist, phi_a_hist(:,i), 4, colors{i});  
-				h(i) = plot(phi_t_hist, phi_a_hist(:,i), [colors{i} style{i}]); 
-			end 
-			title('Arrival Angle') 
-			ylabel('deg') 
-			legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
-			
-		subplot(3,1,3) 
-			hold on; 
-			for i = 1:4
-	%             scatter(phi_t_hist, tof_hist(:,i), 4, colors{i});  
-				h(i) = plot(phi_t_hist, tof_hist(:,i), [colors{i} style{i}]); 
-			end 
-			title('Time of Flight') 
-			ylabel('deg') 
-			legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
-			
-		xlabel('Transfer Angle Phi (deg)') 
-	
-		sgtitle('Min Energy Parameters') 
-	
-	%% save plots 
-	
-	
-	%% RIGHT HERE 
-function [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(t0, phi_des, plot_option)
-
-addpath(genpath('mice')); 
-addpath(genpath('spice_data')); 
-
-%  Load kernel file 
-cspice_furnsh( 'spice_data/naif0011.tls' )
-cspice_furnsh( 'spice_data/de421.bsp' )       
-cspice_furnsh( 'spice_data/pck00010.tpc ') 
-
-abcorr  = 'NONE';
-
-%  Convert the epoch to ephemeris time (secs) 
-et_t0   = cspice_str2et( t0 );
-
-% get states --> Sun to Earth 
-target   = 'Earth';
-frame    = 'J2000';
-observer = 'Sun';
-abcorr   = 'NONE';
-
-% get sun position 
-et = et_t0;    % propagate ephemeris time by 1 day in secs 
-X_sunE  = spice_state(et, target, frame, abcorr, observer); 
-
-% get states --> Sun to Mars
-target   = 'Mars';
-frame    = 'J2000';
-observer = 'Sun';
-abcorr   = 'NONE';
-
-% get sun position 
-et = et_t0;    % propagate ephemeris time by 1 day in secs 
-X_sunM  = spice_state(et, target, frame, abcorr, observer); 
-
-% get angle between Earth and Mars velocities 
-r_E = X_sunE(1:3); 
-r_M = X_sunM(1:3); 
-v_E = X_sunE(4:6); 
-v_M = X_sunM(4:6); 
-
-% angle and velocity angles 
-phi_r = acosd( dot(r_E, r_M) / (norm(r_E)*norm(r_M)) ); 
-phi_v = acosd( dot(v_E, v_M) / (norm(v_E)*norm(v_M)) ); 
-
-i = 0; 
-while abs(phi_r - phi_des) > 0.01
+end 
     
-    % propagate by 0.1 day 
-    i  = i + 0.01; 
-    et = et_t0 + i*86400; 
-    
-    % get velocity 
-    X_sunM  = spice_state(et, target, frame, abcorr, observer); 
-    r_M = X_sunM(1:3); 
-    v_M = X_sunM(4:6); 
 
-    % get angle 
-    phi_r = acosd( dot(r_E, r_M) / (norm(r_E)*norm(r_M)) ); 
-    phi_v = acosd( dot(v_E, v_M) / (norm(v_E)*norm(v_M)) ); 
+while abs(phi - 75) > 0.01
+% while i < 687 
+
+    i = i + 0.001; 
+    
+    % find orbit normal for Earth and Mars transfer (using random Mars vector) 
+    tof  = i;       % units = days 
+    Teph = T0 + tof; 
+    ra   = xyz_ecl(Teph, Mars); 
+    phi  = acosd( dot(rd, ra) / (norm(rd)*norm(ra)) ); 
+    
+    % save ra hist 
+    ra_hist = [ra_hist; ra']; 
+    
+    % plot 
+    if plot_option == 1
+        axes(h1); 
+            quiver3(0, 0, 0, ra(1), ra(2), ra(3), 'r'); 
+            pause(0.001); 
+        axes(h2); 
+            text3 = sprintf('Transfer angle (Earth_{td} to Mars_{ta})= %.5g', phi);
+            text4 = sprintf('days = %.3g', tof); 
+            h2_text(h2, text1, text2, text3, text4); 
+    end 
+
+end 
+
+if plot_option == 2 
+    
+    zn = zeros(size(ra_hist)); 
+    axes(h1); 
+        quiver3(zn(:,1), zn(:,2), zn(:,3), ra_hist(:,1), ra_hist(:,2), ra_hist(:,3), 'r'); 
+    
+    axes(h2); 
+        text3 = sprintf('Transfer angle (Earth_{td} to Mars_{ta})= %.5g', phi);
+        text4 = sprintf('days = %.3g', tof); 
+        h2_text(h2, text1, text2, text3, text4); 
     
 end 
 
-% units in km 
-rd_E = r_E ; 
-ra_M = r_M ; 
-vd_E = v_E ; 
-va_M = v_M ; 
-
-% propagate to get full Earth orbit 
-X_sunE_hist = []; 
-target   = 'Earth';
-for i = 0:365+1
-    
-    et = et_t0 + i*86400; 
-    
-    % get state 
-    X_sunE  = spice_state(et, target, frame, abcorr, observer); 
-    
-    % save Mars vector 
-    X_sunE_hist = [X_sunE_hist; X_sunE]; 
+if plot_option > 1 
+% plot final mars position 
+    axes(h1); 
+        l5 = plot3( ra(1), ra(2), ra(3), 'rp'); 
+        hleg = [ l1(1), l2(1), l3(1), l4(1), l5(1) ]; 
+        legend(hleg, 'Earth_{td}', 'Mars', 'Sun', 'Mars_{td}', 'Mars_{ta}'); 
 end 
-
-% propagate to get full Mars orbit 
-X_sunM_hist = []; 
-target   = 'Mars';
-for i = 0:687+1
-    
-    et = et_t0 + i*86400; 
-    
-    % get state 
-    X_sunM  = spice_state(et, target, frame, abcorr, observer); 
-    
-    % save Mars vector 
-    X_sunM_hist = [X_sunM_hist; X_sunM]; 
-end 
-
     
 %% Part 1a
 % Lambert - from VALLADO ed. 4, pgs 467 - 475 
@@ -515,6 +278,66 @@ end
 
 
 %% subfunctions 
+
+function [r_ecl] = xyz_ecl(Teph, planet)
+% ------------------------------------------------------------------------
+% Teph  = ephemeris time (days) 
+% planet = planet orbital elements, units AU 
+% r_ecl = J2000 ecliptic plane coordinates 
+% ------------------------------------------------------------------------
+
+T = (Teph - 2451545.0)/36525;
+
+% propagate 6 elements 
+a = planet.a0 + planet.da * T; 
+e = planet.e0 + planet.de * T; 
+I = planet.I0 + planet.dI * T; 
+L = planet.L0 + planet.dL * T; 
+wbar = planet.wbar0 + planet.dwbar * T; 
+Omega = planet.Omega0 + planet.dOmega * T; 
+
+% argument of perihelion 
+w = wbar - Omega; 
+
+% mean anomaly 
+M = L - wbar; 
+if abs(M) > 180
+    if M > 0 
+        rem = mod(M, 180); 
+        M = - 180 + rem; 
+    else
+        rem = mod(-M, 180); 
+        M = 180 - rem; 
+    end 
+end 
+
+% eccentric anomaly 
+% E = keplerEq(M, e, eps); 
+E = kepler(M, 180/pi*e); 
+
+% heliocentric coordinates in orbital plane, xp algined from focus to
+% perihelion 
+xp = a * (cosd(E) - e); 
+yp = a * sqrt( 1 - e^2 ) * sind(E); 
+zp = 0; 
+
+% coordinates in J2000 ecliptic plane, x aligned toward equinox 
+x_ecl = (  cosd(w)*cosd(Omega) - sind(w)*sind(Omega)*cosd(I) ) * xp + ... 
+        ( -sind(w)*cosd(Omega) - cosd(w)*sind(Omega)*cosd(I) ) * yp ; 
+y_ecl = (  cosd(w)*sind(Omega) + sind(w)*cosd(Omega)*cosd(I) ) * xp + ... 
+        ( -sind(w)*sind(Omega) + cosd(w)*cosd(Omega)*cosd(I) ) * yp;     
+z_ecl = ( sind(w)*sind(I) ) * xp + ( cosd(w)*sind(I) ) * yp; 
+r_ecl = [ x_ecl; y_ecl; z_ecl ]; 
+
+% obliquity at J2000 (deg) 
+e_obl = 23.43928; 
+
+% "ICRF" or "J2000 frame"
+x_eq  = x_ecl; 
+y_eq  = cosd(e_obl)*y_ecl - sind(e_obl)*z_ecl; 
+z_eq  = sind(e_obl)*y_ecl + cosd(e_obl)*z_ecl; 
+
+end 
 
 function plot_probe(rv_hist, X_sunE_hist, X_sunM_hist, rd_E, ra_M, ftitle) 
 
@@ -857,135 +680,3 @@ end
 %     psi_n = psi_np1; 
 %     
 % end 
-
-
-function [vd, va] = LAMBERTBATTIN_km_sun_June(rd, ra, dm, dt)
-% VALLADO BATTIN METHOD 
-
-% mu = 3.986004418e14;   % m3/s2
-mu_sun_m = 1.32712440018e20; 
-mu_sun_km = mu_sun_m / (1000^3); 
-mu = mu_sun_km; 
-
-% cos and sin dnu 
-ra_mag  = norm(ra);
-rd_mag  = norm(rd);
-cos_dnu = dot(rd,ra)/(rd_mag*ra_mag);
-dnu     = acos(cos_dnu); 
-sin_dnu = sin(dnu); 
-
-% the angle needs to be positive to work for the long way
-if dnu < 0.0
-    dnu = 2*pi + dnu;
-end
-
-% geometry 
-c   = sqrt( rd_mag^2 + ra_mag^2 - 2*rd_mag*ra_mag*cos_dnu ); 
-s   = ( rd_mag + ra_mag + c ) / 2; 
-eps = (ra_mag - rd_mag) / rd_mag; 
-
-% tan2w --> rdp 
-sqrt_rda = sqrt( ra_mag / rd_mag ); 
-tan22w    = ( eps^2/4 ) / ( sqrt_rda + sqrt_rda^2*( 2 + sqrt_rda ) ); 
-rdp      = sqrt( rd_mag*ra_mag ) * ( cos( dnu/4 )^2 + tan22w ); 
-
-% obtain L 
-if dnu < pi 
-    num = sin(dnu/4)^2 + tan22w; 
-    den = sin(dnu/4)^2 + tan22w + cos(dnu/2); 
-else
-    num = cos(dnu/4)^2 + tan22w - cos(dnu/2); 
-    den = cos(dnu/4)^2 + tan22w; 
-end 
-L = num / den; 
-
-m = mu * dt^2 / ( 8*rdp^3 ); 
-
-% orbit is elliptical 
-xn = L;
-eta = xn / ( sqrt( 1+xn ) + 1 )^2;  
-x = -xn; 
-
-i = 0; 
-% loop 
-while (1) 
-    
-    i = i + 1; 
-    
-    x = xn; 
-    
-    % omg crazy recursion in fraction denominator 
-    tempx = seebatt(x); 
-
-    % h1 
-    num = (L+x)^2 * (1 + 3*x + tempx); 
-    den = ( 1 + 2*x + L ) * ( 4*x + tempx*( 3+x ) ); 
-    h1  = num / den; 
-    
-    % h2 
-    num = m*(x - L + tempx); 
-    h2  = num / den; 
-    
-    % solve cubic y^3 - y^2 - h1*y^2 - h2 = 0 
-    rts = roots([1 -1 -h1 -h2]); 
-    
-    B = 27*h2 / ( 4*( 1 + h1 )^3 ); 
-    U = B / ( 2*( sqrt( 1+B ) + 1 ) ); 
-    
-    K = seebattk(U); 
-    y = (1 + h1)/3 * ( 2 + ( sqrt(1+B) )/( 1 + 2*U*K^2 ) ); 
-    xn = sqrt( ( (1-L)/2 )^2 + ( m/y^2 ) ) - (1+L)/2; 
-    
-    if abs(xn - x) < 0.000001 && i > 30
-        break 
-    end 
-        
-end 
-
-% semi-major axis!!! 
-a = mu_sun_km*dt^2 / ( 16 * rdp^2 * x * y^2 ); 
-
-if a > 0 
-    
-    % obtain f, g, and dg 
-    alpha = 2 * asin( sqrt( s/(2*a) ) ); 
-    beta  = 2 * asin( sqrt( (s-c)/(2*a) ) ); 
-    
-    % min 
-    amin = s / 2; 
-    tmin = sqrt( amin^3/mu_sun_km ) * ( pi - beta + sin(beta) ); 
-    if dt > tmin 
-        alpha = 2*pi - alpha; 
-    end 
-    de    = alpha - beta; 
-    
-    f  = 1 - a/rd_mag * ( 1 - cos(de) ); 
-    g  = dt - sqrt( a^3/mu_sun_km ) * ( de - sin(de) ); 
-    dg = 1 - a/ra_mag * ( 1 - cos(de) ); 
-
-else
-    
-    disp('oh no') 
-    
-end 
-
-% velocities!! 
-vd = (ra - f*rd) / g; 
-va = (dg*ra - rd) / g; 
-
-end 
-	
-	
-	
-	
-\end{lstlisting}
-
-
-
-
-
-% ================================================================ % 
-
-% \bibliography{sample}
-
-\end{document}
