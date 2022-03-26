@@ -1,14 +1,6 @@
 %% RIGHT HERE 
 function [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(t0, phi_des, plot_option)
 
-addpath(genpath('mice')); 
-addpath(genpath('spice_data')); 
-
-%  Load kernel file 
-cspice_furnsh( 'spice_data/naif0011.tls' )
-cspice_furnsh( 'spice_data/de421.bsp' )       
-cspice_furnsh( 'spice_data/pck00010.tpc ') 
-
 abcorr  = 'NONE';
 
 %  Convert the epoch to ephemeris time (secs) 

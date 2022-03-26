@@ -3,6 +3,15 @@
 
 % close all; 
 clear; 
+addpath(genpath('Lambert Battin'))
+
+addpath(genpath('mice')); 
+addpath(genpath('spice_data')); 
+
+%  Load kernel file 
+cspice_furnsh( 'spice_data/naif0011.tls' )
+cspice_furnsh( 'spice_data/de421.bsp' )       
+cspice_furnsh( 'spice_data/pck00010.tpc ') 
 
 %% transfer angle = 75 deg 
 
