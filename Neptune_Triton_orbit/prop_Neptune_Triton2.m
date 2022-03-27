@@ -143,6 +143,8 @@ rv0_test = [
          -9.58620042665604
          -12.6791987521143
           7.82653873130335 ]; 
+      
+      
 
 rv0_sat = rvOrb.orb2rv(OE0_sat, const.muN); 
 % rv0_test = rvOrb.orb2rv(OE0_test, const.muN); 
@@ -188,47 +190,47 @@ T_test2 = 2*pi*sqrt( OE_Ntest_min(1)^3 / const.muN );
 rv0_test2 = rvOrb.orb2rv(OE_Ntest_min, const.muN); 
 [t, X_Ntest2] = ode45(@fn.EOM, [0: dt : T_test2], rv0_test2, options); 
 
-% %% propagate Triton 
-% 
-% X_NT = []; 
-% OE_T = []; 
-% 
-% T0_T = 507772.8; 
-% dt = 10; 
-% for i = 0 : dt : T0_T
-%     
-%     % propagate by 0.1 day 
-%     et = et_t0 + i; 
-%     
-%     % get velocity 
-%     X  = spice_state(et, target, frame, abcorr, observer); 
-%     r_T = X(1:3); 
-%     v_T = X(4:6); 
-%     
-%     OE = rvOrb.rv2orb(X, const.muN); 
-%     
-%     X_NT = [X_NT; X]; 
-%     OE_T = [OE_T; OE]; 
-%     
-% end 
-% 
-% %%
-% 
-%     labels = {'a', 'e', 'i', 'w (arg of perigee)', 'O (RAAN)', 'nu (true anomaly)'}; 
-%     ftitle = 'Triton Orbital Elements'; 
-%     figure('name', ftitle) 
-%         for i = 1:6 
-%             subplot(6,1,i) 
-%             plot([0:dt:T0_T], OE_T(:,i))
-%             title(labels{i})
-%         end 
-%         xlabel('time (s)') 
-% 
-% %% Plot satellite position 
-% 
-% phi_des = 100; 
-% 
-% % [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(X_NS, t0, phi_des, plot_option)
+%% propagate Triton 
+
+X_NT = []; 
+OE_T = []; 
+
+T0_T = 507772.8; 
+dt = 10; 
+for i = 0 : dt : T0_T
+    
+    % propagate by 0.1 day 
+    et = et_t0 + i; 
+    
+    % get velocity 
+    X  = spice_state(et, target, frame, abcorr, observer); 
+    r_T = X(1:3); 
+    v_T = X(4:6); 
+    
+    OE = rvOrb.rv2orb(X, const.muN); 
+    
+    X_NT = [X_NT; X]; 
+    OE_T = [OE_T; OE]; 
+    
+end 
+
+%%
+
+    labels = {'a', 'e', 'i', 'w (arg of perigee)', 'O (RAAN)', 'nu (true anomaly)'}; 
+    ftitle = 'Triton Orbital Elements'; 
+    figure('name', ftitle) 
+        for i = 1:6 
+            subplot(6,1,i) 
+            plot([0:dt:T0_T], OE_T(:,i))
+            title(labels{i})
+        end 
+        xlabel('time (s)') 
+
+%% Plot satellite position 
+
+phi_des = 100; 
+
+% [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(X_NS, t0, phi_des, plot_option)
 % [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(rv0_T, t0, phi_des, 1)
 
 %% 
@@ -236,6 +238,7 @@ rv0_test2 = rvOrb.orb2rv(OE_Ntest_min, const.muN);
 % Neptune sphere 
 [X, Y, Z] = sphere; 
 XN = X * const.RN; YN = Y * const.RN; ZN = Z * const.RN; 
+
 
 % Triton orbit = OE0_T; 
 rnorm_T = norm(X_NT0(1:3)); 
