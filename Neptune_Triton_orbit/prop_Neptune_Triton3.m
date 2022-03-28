@@ -155,82 +155,24 @@ X_Nsat_max = X_Nsat_e2(i_max, :);
 % augment OE "delta v" raise periapsis 
 OE_Nsat_max = rvOrb.rv2orb(X_Nsat_max, const.muN); 
 OE_Nsat_max(1) = OE_Nsat_max(1)*0.6; 
-T_Nsat_max = 2*pi*sqrt( OE_Nsat_max(1)^3 / const.muN ); 
 
 % obtain state of raised periapsis elliptical orbit 
 rv0_test = rvOrb.orb2rv(OE_Nsat_max, const.muN); 
 X_Nsat_max(4:6) = rv0_test(4:6); 
+OE_Nsat_max = rvOrb.rv2orb(X_Nsat_max, const.muN); 
+T_Nsat_max = 2*pi*sqrt( OE_Nsat_max(1)^3 / const.muN ); 
 
 % propagate raised periapsis elliptical orbit 
-[t, X_Nsat_ep] = ode45(@fn.EOM, [0: dt : T_Nsat_max * 3], X_Nsat_max, options); 
+[t, X_Nsat_ep] = ode45(@fn.EOM, [0: dt : T_Nsat_max * 0.8], X_Nsat_max, options); 
 
 % ------------------------------------------------------------------------ 
-% inclination change maneuver 
+% 1st inclination change maneuver 
 
-% obtain OEs 
-oe_di = rvOrb.rv2orb(X_Nsat_ep(end,:), const.muN); 
-w = oe_di(4); 
-oe_di(4) = 2*pi - w; 
+[t, X_Nsat_ei1] = incl_change(X_Nsat_ep, OE_T, dt, const, options); 
+[t, X_Nsat_ei2] = incl_change(X_Nsat_ei1, OE_T, dt, const, options); 
+[t, X_Nsat_ei3] = incl_change(X_Nsat_ei2, OE_T, dt, const, options); 
+[t, X_Nsat_ei4] = incl_change(X_Nsat_ei3, OE_T, dt, const, options); 
 
-% orbit normal 
-h = cross(X_Nsat_ep(end, 1:3), X_Nsat_ep(end, 4:6)); 
-h = h / norm(h); 
-
-% desired plane change direction 
-h_des = -h; 
-
-% desired change in inclination = 180 deg - Triton inclination 
-di = pi - OE_T(end,3); 
-
-% % line node 
-% n = cross([0 0 1], h); 
-% n = n / norm(n); 
-% 
-% k = 0; 
-% phi = 1; 
-% % find where orbit and line node crossing direction overlap 
-% while phi > 0.1 
-%     
-%     k = k + 1; 
-%     r_unit = X_Nsat_ep(k, 1:3) / norm(X_Nsat_ep(k, 1:3));
-%     phi    = acos( dot(n, r_unit) ); 
-%     
-% end 
-rv_di = rvOrb.orb2rv(oe_di, const.muN); 
-
-% satellite state and OEs at line of node 
-% rv_di = X_Nsat_ep(k,:); 
-% oe_di = rvOrb.rv2orb(rv_di, const.muN); 
-
-% v initial 
-vi = rv_di(4:6); 
-vi_norm = norm(vi); 
-
-% flight path angle 
-e = oe_di(2); 
-% nu = oe_di(6); 
-nu = oe_di(6) - pi; 
-fpa = atan( e*sin(nu) / ( 1 + e*cos(nu) ) ); 
-
-% desired delta velocity magnitude 
-dvi_norm = 2 * vi_norm * cos(fpa) * sin(di/2); 
-dvi_norm = 1; 
-
-% desired delta velocity vector 
-dvi = h_des * dvi_norm; 
-
-% new state 
-oe_di(6) = nu; 
-rv_di = rvOrb.orb2rv(oe_di, const.muN); 
-rv_di(4:6) = rv_di(4:6) + dvi'; 
-
-% fpa again 
-fpa = atan( e*sin(nu) / ( 1 + e*cos(nu) ) ); 
-
-% propagate 
-[t, X_Nsat_ei] = ode45(@fn.EOM, [0: dt : T_Nsat_min*10], rv_di, options); 
-
-oe_di2 = rvOrb.rv2orb(X_Nsat_ei(end,:), const.muN); 
 
 %% plot 
 
@@ -247,81 +189,194 @@ if plot_orbit == 1
     ftitle = 'Orbit around Neptune'; 
     figure('name', ftitle); 
     
-        % Plot Neptune + Triton 
-        ellipsoid(0, 0, 0, const.RN + 1000, const.RN + 1000, const.RN + 1000); alpha 0.2; shading interp; 
-        hold on; grid on; axis equal 
-        ellipsoid(0, 0, 0, const.RN, const.RN, const.RN); alpha 0.4; shading interp; 
-        plot3(X_NT(:,1), X_NT(:,2), X_NT(:,3), 'b', 'linewidth', 2);
-        plot3(X_NT(1,1), X_NT(1,2), X_NT(1,3), 'bo'); 
-        plot3(X_NT(end,1), X_NT(end,2), X_NT(end,3), 'b^'); 
-%         patch([1 -1 -1 1]*rnorm_T, [1 1 -1 -1]*rnorm_T, [0 0 0 0]*rnorm_T, [1 1 -1 -1]*rnorm_T); alpha 0.2  
+        % hyperbolic, 1st aerocapture, 2nd aerocapture 
+        subplot(2,2,1) 
+            plot_NT(const, X_NT, rnorm_T)
 
-        % J2000 axes 
-        quiver3(0, 0, 0, v_eq(1), v_eq(2), v_eq(3))
-        quiver3(0, 0, 0, 0, rnorm_T, 0); 
-        quiver3(0, 0, 0, 0, 0, rnorm_T); 
-            txt = 'J2000_x';
-            text(v_eq(1),v_eq(2),v_eq(3), txt)
-        
-        % hyperbolic trajectory 
-        plot3(X_Nsat_h(1,1), X_Nsat_h(1,2), X_Nsat_h(1,3), 'mo'); 
-        plot3(X_Nsat_h(:,1), X_Nsat_h(:,2), X_Nsat_h(:,3), 'm', 'linewidth', 2); 
-        plot3(X_Nsat_h(end,1), X_Nsat_h(end,2), X_Nsat_h(end,3), 'm^'); 
-        plot3(X_Nsat_min(1), X_Nsat_min(2), X_Nsat_min(3), 'mp'); 
+            % hyperbolic trajectory 
+            c = [1 0 1]; 
+            plot_traj(X_Nsat_h, c); 
+            plot3(X_Nsat_min(1), X_Nsat_min(2), X_Nsat_min(3), 'mp'); 
 
-%         plot3(19813.3, -16908.2, 2612.7, 'p')
-        % 1st elliptical aerocapture 
-        plot3(X_Nsat_e1(1,1), X_Nsat_e1(1,2), X_Nsat_e1(1,3), 'co'); 
-        plot3(X_Nsat_e1(:,1), X_Nsat_e1(:,2), X_Nsat_e1(:,3), 'c', 'linewidth', 2); 
-        plot3(X_Nsat_e1(end,1), X_Nsat_e1(end,2), X_Nsat_e1(end,3), 'c^'); 
-        
-        % 2nd elliptical aerocapture 
-        plot3(X_Nsat_e2(1,1), X_Nsat_e2(1,2), X_Nsat_e2(1,3), 'co'); 
-        plot3(X_Nsat_e2(:,1), X_Nsat_e2(:,2), X_Nsat_e2(:,3), 'c', 'linewidth', 2); 
-        plot3(X_Nsat_e2(end,1), X_Nsat_e2(end,2), X_Nsat_e2(end,3), 'c^'); 
+            % 1st elliptical aerocapture 
+            c = [0 1 1]; 
+            plot_traj(X_Nsat_e1, c); 
 
-        % APOAPSIS 
-        plot3(X_Nsat_e2(i_max,1), X_Nsat_e2(i_max,2), X_Nsat_e2(i_max,3), 'p'); 
-        
-        % RAAN line node 
-        a = OE_Nsat_min(1); 
-        quiver3(0, 0, 0, n(1)*a, n(2)*a, n(3)*a, 'k', 'linewidth', 1.5); 
-        plot3(rv_di(1), rv_di(2), rv_di(3), 'kp')
-            txt = 'RAAN line node'; 
-            text(n(1)*a, n(2)*a, n(3)*a, txt)
-        quiver3(0, 0, 0, -n(1)*a*2, -n(2)*a*2, -n(3)*a*2, 'k', 'linewidth', 1.5); 
-            txt = 'Desc. line node'; 
-            text(-n(1)*a*2, -n(2)*a*2, -n(3)*a*2, txt)
-        
-        % raise periapsis 
-        c = [0.8500 0.3250 0.0980]; 
-        plot3(X_Nsat_ep(1,1), X_Nsat_ep(1,2), X_Nsat_ep(1,3), 'o', 'color', c); 
-        plot3(X_Nsat_ep(:,1), X_Nsat_ep(:,2), X_Nsat_ep(:,3), 'color', c, 'linewidth', 2); 
-        plot3(X_Nsat_ep(end,1), X_Nsat_ep(end,2), X_Nsat_ep(end,3), '^', 'color', c); 
-        
-        % inclination change 
-%         plot3(X_Nsat_ep(1,1), X_Nsat_ep(1,2), X_Nsat_ep(1,3), 'go'); 
-%         plot3(X_Nsat_ep(:,1), X_Nsat_ep(:,2), X_Nsat_ep(:,3), 'g--', 'linewidth', 2); 
-%         plot3(X_Nsat_ep(end,1), X_Nsat_ep(end,2), X_Nsat_ep(end,3), 'g^'); 
-        
+            % 2nd elliptical aerocapture 
+            plot_traj(X_Nsat_e2, c); 
 
+            % APOAPSIS 
+            plot3(X_Nsat_e2(i_max,1), X_Nsat_e2(i_max,2), X_Nsat_e2(i_max,3), 'p'); 
+            
+            title('Hyperb, 1st aero, 2nd aero') 
+            
+        % 2nd aerocapture, raise periapsis 
+        subplot(2,2,2) 
+            plot_NT(const, X_NT, rnorm_T)
 
+            % 2nd elliptical aerocapture 
+            c = [0 1 1]; 
+            plot_traj(X_Nsat_e2, c); 
+            
+            % APOAPSIS 
+            plot3(X_Nsat_e2(i_max,1), X_Nsat_e2(i_max,2), X_Nsat_e2(i_max,3), 'p'); 
+
+            % raise periapsis 
+            c = [0.8500 0.3250 0.0980]; 
+            plot_traj(X_Nsat_ep, c)
+            
+            title('2nd aero, raise peri') 
+            
+        % raise periapsis, inclination change 
+        subplot(2,2,3) 
+            plot_NT(const, X_NT, rnorm_T)
+
+            % raise periapsis 
+            c = [0.8500 0.3250 0.0980]; 
+            plot_traj(X_Nsat_ep, c)
+
+            % APOAPSIS 
+            plot3(X_Nsat_e2(i_max,1), X_Nsat_e2(i_max,2), X_Nsat_e2(i_max,3), 'p'); 
+        
+            % RAAN line node 
+            a = OE_Nsat_min(1); 
+            quiver3(0, 0, 0, n(1)*a, n(2)*a, n(3)*a, 'k', 'linewidth', 1.5); 
+            plot3(rv_di(1), rv_di(2), rv_di(3), 'kp')
+                txt = 'line node'; 
+                text(n(1)*a, n(2)*a, n(3)*a, txt)
+            quiver3(0, 0, 0, -n(1)*a*2, -n(2)*a*2, -n(3)*a*2, 'k', 'linewidth', 1.5); 
+                txt = 'line node'; 
+                text(-n(1)*a*2, -n(2)*a*2, -n(3)*a*2, txt)
+
+            % inclination change 1
+            c = [0.4940 0.1840 0.5560]; 
+            plot_traj(X_Nsat_ei1, c)
+            
+            % inclination change 2
+            c = [0.4660 0.6740 0.1880]; 
+            plot_traj(X_Nsat_ei2, c)
+            
+            % inclination change 3
+            c = [0.3010 0.7450 0.9330]; 
+            plot_traj(X_Nsat_ei3, c)
+
+            % inclination change 4
+            c = [0.6350 0.0780 0.1840]; 
+            plot_traj(X_Nsat_ei4, c)
+
+            title('Raise peri, incl change') 
 %         legend('Neptune', 'sat', 'Triton', 'ecliptic', 'J2000_X', 'J2000_Y', 'J2000_Z'); 
 
-        xlabel('x (km)'); ylabel('y (km)'); zlabel('z (km)'); 
-        title(ftitle)
-        
-%         view(0, 90); 
-        
-%     labels = {'a', 'e', 'i', 'w (arg of perigee)', 'O (RAAN)', 'nu (true anomaly)'}; 
-%     ftitle = 'Orbital Elements'; 
-%     figure('name', ftitle) 
-%         for i = 1:6 
-%             subplot(6,1,i) 
-%             plot(t, OE(:,i))
-%             title(labels{i})
-%         end 
-%         xlabel('time (s)') 
+        % inclination change, RAAN change 
+        subplot(2,2,4) 
+            plot_NT(const, X_NT, rnorm_T)
+            
+            % inclination change 
+            c = [0.4940 0.1840 0.5560]; 
+            plot_traj(X_Nsat_ei, c)
+
+        sgtitle(ftitle)
     
 end
 
+% ------------------------------------------------------------------------
+% plot NEPTUNE and TRITON 
+
+function plot_NT(const, X_NT, rnorm_T)
+
+    % Plot Neptune + Triton 
+    ellipsoid(0, 0, 0, const.RN + 1000, const.RN + 1000, const.RN + 1000); alpha 0.2; shading interp; 
+    hold on; grid on; axis equal 
+    ellipsoid(0, 0, 0, const.RN, const.RN, const.RN); alpha 0.4; shading interp; 
+    plot3(X_NT(:,1), X_NT(:,2), X_NT(:,3), 'b', 'linewidth', 1.2);
+    plot3(X_NT(1,1), X_NT(1,2), X_NT(1,3), 'bo'); 
+    plot3(X_NT(end,1), X_NT(end,2), X_NT(end,3), 'b^'); 
+%         patch([1 -1 -1 1]*rnorm_T, [1 1 -1 -1]*rnorm_T, [0 0 0 0]*rnorm_T, [1 1 -1 -1]*rnorm_T); alpha 0.2  
+
+    % J2000 axes 
+    quiver3(0, 0, 0, rnorm_T, 0, 0)
+    quiver3(0, 0, 0, 0, rnorm_T, 0); 
+    quiver3(0, 0, 0, 0, 0, rnorm_T); 
+        txt = 'J2000_x';
+        text(rnorm_T, 0, 0, txt)
+        
+    view(-54, 64)
+    
+    xlabel('x (km)'); ylabel('y (km)'); zlabel('z (km)'); 
+
+end 
+
+% ------------------------------------------------------------------------
+% plot start, middle, and end 
+
+function plot_traj(X_Nsat_e1, c)
+    plot3(X_Nsat_e1(1,1), X_Nsat_e1(1,2), X_Nsat_e1(1,3), 'o', 'color', c); 
+    plot3(X_Nsat_e1(:,1), X_Nsat_e1(:,2), X_Nsat_e1(:,3), '', 'color', c, 'linewidth', 2); 
+    plot3(X_Nsat_e1(end,1), X_Nsat_e1(end,2), X_Nsat_e1(end,3), '^', 'color', c); 
+end 
+
+%% subfunctions 
+
+function [t, X_Nsat_ei] = incl_change(X_Nsat_ep, OE_T, dt, const, options)
+
+% obtain OE for input state (orbit)
+oe_di = rvOrb.rv2orb(X_Nsat_ep(end,:), const.muN); 
+
+% orbit normal 
+h = cross(X_Nsat_ep(end, 1:3), X_Nsat_ep(end, 4:6)); 
+h = h / norm(h); 
+
+% desired plane change direction 
+h_des = -h; 
+
+% desired change in inclination = 180 deg - Triton inclination 
+di = oe_di(3) - OE_T(end,3); 
+if di > 10 * pi/180 
+    di = 10 * pi/180; 
+elseif di < -10 * pi/180 
+    di = -10 * pi/180; 
+end 
+
+% line node 
+n = cross([0 0 1], h); 
+n = n / norm(n); 
+
+% arg of perigee (angle RAAN to periapsis) 
+w = oe_di(4); 
+
+% set nu at RAAN (periapsis to RAAN). obtain state at LINE OF NODE 
+nu = 2*pi - w; 
+oe_di(6) = nu; 
+rv_di = rvOrb.orb2rv(oe_di, const.muN); 
+
+% v initial 
+vi = rv_di(4:6); 
+vi_norm = norm(vi); 
+
+% flight path angle 
+e = oe_di(2); 
+% nu = oe_di(6); 
+nu = oe_di(6) - pi; 
+fpa = atan( e*sin(nu) / ( 1 + e*cos(nu) ) ); 
+
+% desired delta velocity magnitude 
+dvi_norm = 2 * vi_norm * cos(fpa) * sin(di/2); 
+% dvi_norm = 1; 
+
+% desired delta velocity vector 
+dvi = h_des * dvi_norm; 
+
+% new state 
+oe_di(6) = nu; 
+rv_di = rvOrb.orb2rv(oe_di, const.muN); 
+rv_di(4:6) = rv_di(4:6) + dvi'; 
+oe_di = rvOrb.rv2orb(rv_di, const.muN); 
+
+% fpa again 
+fpa = atan( e*sin(nu) / ( 1 + e*cos(nu) ) ); 
+
+% propagate 
+T = 2*pi*sqrt( oe_di(1)^3 / const.muN ); 
+[t, X_Nsat_ei] = ode45(@fn.EOM, [0: dt : T*0.9], rv_di, options); 
+
+end 
