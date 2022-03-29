@@ -40,16 +40,16 @@ const.Cs  = 0.04;                   % specular reflection
 
 eop_data = load('finals_iau1980.txt'); 
 
-% Atmospheric drag 
-r   = norm(rv0_sat(1:3));            % km 
-const.H   = 88667.0 / 1000;           % m --> km 
-const.r0_drag  = (1000 + const.RN);          % m --> km 
-const.p0  = 3.614e-13 * 1e9;          % kg/m3 --> kg/km^3 
-const.p   = p0*exp( -(r-r0_drag)/H ); 
-const.A   = 15 / 1e6;                 % m^2 --> km^2 
-const.wN  = 2*pi / (16.1*60*60);      % Neptune rotation angular velocity (period = 16.1 hrs)
-
-const.CD  = 1.88;  
+% % Atmospheric drag 
+% r   = norm(rv0_sat(1:3));            % km 
+% const.H   = 88667.0 / 1000;           % m --> km 
+% const.r0_drag  = (1000 + const.RN);          % m --> km 
+% const.p0  = 3.614e-13 * 1e9;          % kg/m3 --> kg/km^3 
+% const.p   = p0*exp( -(r-r0_drag)/H ); 
+% const.A   = 15 / 1e6;                 % m^2 --> km^2 
+% const.wN  = 2*pi / (16.1*60*60);      % Neptune rotation angular velocity (period = 16.1 hrs)
+% 
+% const.CD  = 1.88;  
 
 global Cnm Snm 
 
