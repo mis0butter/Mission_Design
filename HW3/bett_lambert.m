@@ -57,9 +57,11 @@ rv0_e2 = [r_sunE, v_E2];
 
 ell_1.rv0 = rv0_e1; 
 ell_1.tof = d_t1; 
+ell_1.amin = amin; 
+
 ell_2.rv0 = rv0_e2; 
 ell_2.tof = d_t2; 
-
+ell_2.amin = amin; 
 
 oe_e1 = rvOrb.rv2orb(rv0_e1', mu); 
 oe_e2 = rvOrb.rv2orb(rv0_e2', mu); 

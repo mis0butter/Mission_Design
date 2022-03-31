@@ -2,7 +2,6 @@
 % Junette Hsin 
 
 % Hohmann transfer - Vallado 
-
 % Sphere of influence - Vallado / Russell's notes 
 
 % close all; 
@@ -44,62 +43,6 @@ X_sunE  = spice_state(et_t0, target, frame, abcorr, observer);
 % get sun-Mars position 
 target   = 'Mars';
 X_sunM  = spice_state(et_t0, target, frame, abcorr, observer); 
-
-% get angle between Earth and Mars velocities 
-r_sunE = X_sunE(1:3); 
-r_sunM = X_sunM(1:3); 
-v_sunE = X_sunE(4:6); 
-v_sunM = X_sunM(4:6); 
-
-% position and velocity angles 
-phi_r = acosd( dot(r_sunE, r_sunM) / (norm(r_sunE)*norm(r_sunM)) ); 
-phi_v = acosd( dot(v_sunE, v_sunM) / (norm(v_sunE)*norm(v_sunM)) ); 
-
-% desired phase angle 
-phi_des = 179.6234; 
-
-i = 0; 
-X_sunM_hist = [X_sunM]; 
-X_sunE_hist = [X_sunE]; 
-et_hist = [et_t0]; 
-while abs(phi_r - phi_des) > 0.01
-    
-    if abs(phi_r - phi_des) > 10 
-        % propagate by 1 day 
-        i = i + 1;         
-    elseif abs(phi_r - phi_des) > 1 
-        % propagate by 0.1 day 
-        i = i + 0.1; 
-    else
-        % propagate by 0.01 day 
-        i = i + 0.01; 
-    end 
-    et = et_t0 + i*86400; 
-    
-    % get sun-Mars state 
-    target = 'Mars';
-    X_sunM = spice_state(et, target, frame, abcorr, observer); 
-    r_sunM = X_sunM(1:3); 
-    v_sunM = X_sunM(4:6); 
-
-    % get sun-Earth state 
-    target = 'Earth';
-    X_sunE = spice_state(et, target, frame, abcorr, observer); 
-    
-    % save 
-    X_sunM_hist = [X_sunM_hist; X_sunM]; 
-    X_sunE_hist = [X_sunE_hist; X_sunE]; 
-    et_hist = [et_hist; et]; 
-    
-
-    % get angle 
-    phi_r = acosd( dot(r_sunE, r_sunM) / (norm(r_sunE)*norm(r_sunM)) ); 
-    phi_v = acosd( dot(v_sunE, v_sunM) / (norm(v_sunE)*norm(v_sunM)) ); 
-    
-end 
-
-X_dep = X_sunE_hist(1,:); 
-X_arr = X_sunM_hist(end,:); 
 
 %% simplest case possible 
 
@@ -169,6 +112,12 @@ tic
 [et, X_sunsat] = ode45(@fn.EOM, t, rv0_sat, options); 
 toc 
 
+% back-propagate Mars from arrival 
+
+
+
+%% gravity 
+
 % GMs 
 mu_E = 3.986004418e5; 
 mu_sun = mu; 
@@ -186,54 +135,7 @@ const_vec = 0;
 % determine gravity 
 for i = 1:length(X_sunsat) 
     
-    % current sun-sat vector 
-    r_sunsat = X_sunsat(i, 1:3);
-    r_satsun = -r_sunsat; 
     
-    if const_vec == 1
-        r_sunE = X_dep(1:3);   % constant vector 
-        r_sunM = X_arr(1:3); 
-    else
-        % Current sun-Earth vector 
-        target  = 'Earth';
-        X_sunE  = spice_state(et(i), target, frame, abcorr, observer); 
-        r_sunE = X_sunE(1:3); 
-        % Current sun-Mars vector 
-        target = 'Mars'; 
-        X_sunM = spice_state(et(i), target, frame, abcorr, observer); 
-        r_sunM = X_sunM(1:3); 
-    end 
-        
-    % Earth to satellite vector 
-    r_Esun = -r_sunE;    
-    r_Esat = r_Esun + r_sunsat; 
-
-    % central body accel Earth-satellite
-    a_Esat = - mu_E * r_Esat / norm(r_Esat)^3; 
-    a_Esat_hist = [a_Esat_hist; norm(a_Esat)]; 
-    
-    % central body accel sun-satellite 
-    a_sunsat = - mu_sun * r_sunsat / norm(r_sunsat)^3; 
-    a_sunsat_hist = [a_sunsat_hist; norm(a_sunsat)]; 
-    
-    % disturbance (third body) Earth-sun 
-%     a_dist = - mu_E * r_Esat / norm(r_Esat)^3 - ... 
-%         mu_sun * ( r_satsun/norm(r_satsun)^3 + r_Esun/norm(r_Esun)^3); 
-    % Vallado disturbance 
-    a_pert_Esun = - mu_sun * ( r_satsun/norm(r_satsun)^3 - r_Esun/norm(r_Esun)^3); 
-    a_pert_Esun_hist = [a_pert_Esun_hist; norm(a_pert_Esun)]; 
-    
-    % Mars to satellite vector 
-    r_Msun = -r_sunM; 
-    r_Msat = r_Msun + r_sunsat;
-    
-    % central body accel Mars-satellite 
-    a_Msat = - mu_M * r_Msat / norm(r_Msat)^3; 
-    a_Msat_hist = [a_Msat_hist; norm(a_Msat)]; 
-    
-    % disturbance (third body) Mars-sun 
-    a_pert_Msun = - mu_sun * ( r_satsun/norm(r_satsun)^3 - r_Msun/norm(r_Msun)^3 );
-    a_pert_Msun_hist = [a_pert_Msun_hist; norm(a_pert_Msun)]; 
     
 end 
 

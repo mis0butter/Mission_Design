@@ -62,7 +62,7 @@ SP_M = T_M_years / abs(T_M_years - 1);
 disp('Synodic period:') 
 disp(SP_M) 
 
-%% phase angle 60 deg 
+%% phase angle 60 deg - Part A and B 
 
 T0 = 2451545.0; % units = days 
 [r_E0, ~, oe_E0] = xyz_ecl(T0, Earth); 
@@ -76,53 +76,41 @@ au2km = 1/km2au;
 L_E0 = oe_E0(4); 
 L_M0 = oe_M0(4); 
 
-% delta longitude 
-dL = L_E0 - L_M0; 
-
 % desired delta longitude 
 dL_des = 60; 
 
-% required delta longitude 
-dL_req = dL - dL_des; 
+% required time (in days) 
+dt_days1 = (dL_des + L_E0 - L_M0) / dL_M * 100 * 365.25; 
 
-% needed time in days 
-t_cent  = dL_req / Mars.dL; 
-t_days1 = t_cent * 100 * 365.25; 
-
-% 1st date of 60 deg phasing - measured from T0 
-T1 = T0 + t_days1; 
-disp('1st date of 60 deg phasing (JD): ') 
-disp(T1) 
-
-% obtain OEs at new time - this is the 1st phasing 60 deg position!! 
-[r_M1, ~, oe_M1] = xyz_ecl(T0 + t_days1, Mars); 
+% new time (60 deg phasing) 
+T1 = T0 + dt_days; 
+[r_E1, ~, oe_E1] = xyz_ecl(T1, Earth); 
+[r_M1, ~, oe_M1] = xyz_ecl(T1, Mars); 
+L_E1 = oe_E1(4); 
 L_M1 = oe_M1(4); 
 
-% determine TOF (point A)
-[ell_1, ell_2] = bett_lambert((r_E0 * au2km)', (r_M1 * au2km)', mu); 
-tof_days_A1 = ell_1.tof/86400; 
-tof_days_A2 = ell_2.tof/86400; 
+% required time (in days) 
+dt_days2 = (dL_des + L_E1 - L_M1) / dL_M * 100 * 365.25; 
 
-% next required phasing time - 2nd phasing 60 deg position is "behind"
-% Earth 
-dL_des = 360 - dL_des*2; 
-t_cent  = dL_des / Mars.dL; 
-t_days2 = t_cent * 100 * 365.25; 
-[r_M2, ~, oe_M2] = xyz_ecl(T0 + t_days1 + t_days2, Mars); 
+% new new time (60 deg phasing) 
+T2 = T1 + dt_days2; 
+[r_E2, ~, oe_E2] = xyz_ecl(T2, Earth); 
+[r_M2, ~, oe_M2] = xyz_ecl(T2, Mars); 
+L_E2 = oe_E2(4); 
 L_M2 = oe_M2(4); 
 
-% determine TOF (point B)
-[ell_1, ell_2] = bett_lambert((r_E0 * au2km)', (r_M2 * au2km)', mu); 
-tof_days_B1 = ell_1.tof/86400; 
-tof_days_B2 = ell_2.tof/86400; 
 
-% How long to wait at Mars before returning to Earth? 
+%% now Mars to Earth - inbound conic - Part C 
 
+% required time (in days) 
+dt_days3 = (dL_des + L_M2 - L_E2) / dL_E * 100 * 365.25; 
 
-
-
-
-
+% new new new time (60 deg phasing) 
+T3 = T2 + dt_days3; 
+[r_E3, ~, oe_E3] = xyz_ecl(T3, Earth); 
+[r_M3, ~, oe_M3] = xyz_ecl(T3, Mars); 
+L_E3 = oe_E3(4); 
+L_M3 = oe_M3(4); 
 
 
 
