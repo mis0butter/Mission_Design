@@ -11,6 +11,9 @@ a = planet.a0 + planet.da * T;
 e = planet.e0 + planet.de * T; 
 I = planet.I0 + planet.dI * T; 
 L = planet.L0 + planet.dL * T; 
+if L > 360
+    L = L - 360; 
+end 
 wbar = planet.wbar0 + planet.dwbar * T; 
 Omega = planet.Omega0 + planet.dOmega * T; 
 

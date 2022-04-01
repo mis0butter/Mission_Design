@@ -533,7 +533,7 @@ figure('name', ftitle, 'position', pos)
         % Mars SOI 
         xlim([t_i_min_Msun/86400 - 1, t_days(end) + 1])
         
-        move_legend 
+        fn.move_legend 
         xlabel('Time (days)') 
         ylabel('deg') 
         title(ftitle) 
