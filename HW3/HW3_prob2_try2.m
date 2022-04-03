@@ -113,7 +113,7 @@ txt = {sprintf('T0 = %.10g JD', T0); ...
     sprintf('T1 = %.10g JD', T1); ... 
     sprintf('TOF = %.10g days', dt_days1) ... 
     }; 
-plot3_p1p2(r_E_hist_T0T1, r_M_hist_T0T1, r_E0, r_M0, r_E1, r_M1, 'Prob 1 - 1st Launch Window', txt)
+plot3_p1p2(r_E_hist_T0T1, r_M_hist_T0T1, r_E0, r_M0, r_E1, r_M1, 'Prob 2 - 1st Launch Window', txt)
 fn.save_pdf(gcf)
 
 
@@ -165,7 +165,7 @@ txt = {sprintf('T0 = %.10g JD', T0); ...
     sprintf('T1 = %.10g JD', T1); ... 
     sprintf('TOF = %.10g days', dt_days1) ... 
     }; 
-plot3_p1p2(r_E_hist_T0T1, r_M_hist_T0T1, r_E0, r_M0, r_E1, r_M1, 'Prob 1 - 2nd Launch Window', txt)
+plot3_p1p2(r_E_hist_T0T1, r_M_hist_T0T1, r_E0, r_M0, r_E1, r_M1, 'Prob 2 - 2nd Launch Window', txt)
 fn.save_pdf(gcf)
 
 
@@ -217,17 +217,10 @@ txt = {sprintf('T0 = %.10g JD', T0); ...
     sprintf('T1 = %.10g JD', T1); ... 
     sprintf('TOF = %.10g days', dt_days1) ... 
     }; 
-plot3_p1p2(r_E_hist_T0T1, r_M_hist_T0T1, r_E0, r_M0, r_E1, r_M1, 'Prob 1 - Inbound Conic Launch Window', txt)
+plot3_p1p2(r_E_hist_T0T1, r_M_hist_T0T1, r_E0, r_M0, r_E1, r_M1, 'Prob 2 - Inbound Conic Launch Window', txt)
 fn.save_pdf(gcf)
 
-
 %% subfunctions 
-
-function h = plot3_quiver(r1, r2, style)
-
-    h = quiver3(r1(1), r1(2), r1(3), r2(1), r2(2), r2(3), style); 
-
-end 
 
 function plot3_p1p2(r_E_hist, r_M_hist, r_E0, r_M0, r_E1, r_M1, ftitle, plt_txt)
 
@@ -250,25 +243,25 @@ figure('name', ftitle, 'position', [100 100 600 700])
 
         % E0 point 
         fn.plot3_xyz(r_E0', 'bo'); 
-        plot3_quiver([0 0 0], r_E0, 'b'); 
+        fn.plot3_quiver([0 0 0], r_E0, 'b'); 
         txt = '    E_i'; 
         text(r_E0(1), r_E0(2), r_E0(3), txt)
 
         % M0 point 
         fn.plot3_xyz(r_M0', 'ro'); 
-        plot3_quiver([0 0 0], r_M0, 'r'); 
+        fn.plot3_quiver([0 0 0], r_M0, 'r'); 
         txt = '    M_i'; 
         text(r_M0(1), r_M0(2), r_M0(3), txt)
 
         % E1 point 
         fn.plot3_xyz(r_E1', 'bp'); 
-        plot3_quiver([0 0 0], r_E1, 'b'); 
+        fn.plot3_quiver([0 0 0], r_E1, 'b'); 
         txt = '    E_f'; 
         text(r_E1(1), r_E1(2), r_E1(3), txt)
 
         % M1 point 
         fn.plot3_xyz(r_M1', 'rp'); 
-        plot3_quiver([0 0 0], r_M1, 'r'); 
+        fn.plot3_quiver([0 0 0], r_M1, 'r'); 
         txt = '    M_f'; 
         text(r_M1(1), r_M1(2), r_M1(3), txt)
 
@@ -278,7 +271,7 @@ figure('name', ftitle, 'position', [100 100 600 700])
         xlabel('x (AU)') 
         ylabel('y (AU)') 
         zlabel('z (AU)') 
-        view(0,90)
+%         view(0,90)
         
     subplot(3,1,3) 
     
@@ -301,23 +294,102 @@ function [dt_days1, tof1, tof2] = launch_date(T0, dep, arr, mu)
     % mean longitude for Departure and Arrival
     L_dep0 = oe_dep0(4); 
     L_arr0 = oe_arr0(4); 
+    
+    %% omg figure it out 
+    
+    h = [0 0 1]'; 
+    ri = r_dep0 / norm(r_dep0);     
+    rf = r_arr0 / norm(r_arr0);
+    
+    % arrival planet frame - X axis at right ascension node 
+    arr_x = fn.rotate_xyz([1 0 0], arr.Omega0*pi/180, 3); 
 
-    % desired delta longitude 
+    % arrival planet orbit normal 
+    arr_z = cross(arr_x, rf); 
+    arr_z = arr_z / norm(arr_z); 
+    if arr_z(3) < 0 
+        arr_z = -arr_z; 
+    end 
+    
+    % arrival planet "y" axis 
+    arr_y = cross(arr_z, arr_x); 
+        
+    % rotate ri around desired longitude 
     dL_des = 60; 
+    ri_rot = fn.rotate_xyz(ri, dL_des*pi/180, 3); 
+    
+    % now project ri_rot onto arrival orbit normal  
+    ri_proj_h = dot(ri_rot, arr_z) * arr_z; 
+    
+    % obtain projection of ri_rot onto orbit plane 
+    rf = ri_rot - ri_proj_h; 
+    rf = rf / norm(rf); 
+        
+    % actual angle and target angle 
+    phi = acosd(dot(ri, rf)); 
+    dL = dL_des; 
+    
+    err = 1e-3; 
+    if phi > dL
+        while abs(phi - dL) > err 
 
-    % required time (in days) 
+            dL_des = dL_des - err; 
+            ri_rot = fn.rotate_xyz(ri, dL_des*pi/180, 3); 
 
-%     dL = dL_des + L_M0 - L_E0; 
-%     if dL < 0
-%         dL = dL + 360; 
-%     elseif dL > 360 
-%         while dL > 360 
-%             dL = dL - 360; 
-%         end 
-%     end 
+            % now project ri_rot onto arrival orbit normal  
+            ri_proj_h = dot(ri_rot, arr_z) * arr_z; 
+
+            % obtain projection of ri_rot onto orbit plane 
+            rf = ri_rot - ri_proj_h; 
+            rf = rf / norm(rf); 
+
+            phi = acosd(dot(ri, rf)); 
+
+        end 
+    else
+        
+        figure()
+    
+        % departure orbit normal 
+        fn.plot3_quiver([0 0 0], [0 0 1], 'k'); 
+        
+        hold on; grid on; 
+
+        % departure x 
+        fn.plot3_quiver([0 0 0], [1 0 0], 'k'); 
+    
+        % arrival orbit normal 
+        fn.plot3_quiver([0 0 0], arr_z, 'b'); 
+        
+        % arrival x 
+        fn.plot3_quiver([0 0 0], arr_x, 'b'); 
+        
+        % initial planet position 
+        fn.plot3_quiver([0 0 0], ri, 'g'); 
+        
+        % final planet position 
+        fn.plot3_quiver([0 0 0], rf, 'r'); 
+        
+        % rotation vector 
+        fn.plot3_quiver([0 0 0], ri_rot, 'c--'); 
+        
+        % projection vector 
+        fn.plot3_quiver([0 0 0], ri_proj_h*0.5, 'm', 10); 
+        
+        legend('Dep orbit normal', 'Dep x', ... 
+            'Arr orbit normal', 'Arr x', ... 
+            'r_i', 'r_f', 'r_{rot}', 'r_{proj}') 
+        
+        pause 
+        
+    end 
+    
+
+    
+    %% 
     
     % desired longitude for arrival 
-    L_des = L_dep0 + dL_des; 
+    L_des = L_dep0 + dL_des;     
     
     % delta longitude 
     dL = L_des - L_arr0; 
@@ -326,6 +398,12 @@ function [dt_days1, tof1, tof2] = launch_date(T0, dep, arr, mu)
     elseif dL > 360 
         dL = dL - 360; 
     end
+    
+%     % actual angle between departure & arrival planet 
+%     phi = acosd( dot(r_dep0, r_arr0) / ( norm(r_dep0)*norm(r_arr0) ) ); 
+% 
+%     % true desired angle 
+%     dL_true = phi + dL_des; 
     
     dL_arr = arr.dL;
     dt_days1 = dL / dL_arr * 100 * 365.25; 
@@ -344,5 +422,60 @@ function [dt_days1, tof1, tof2] = launch_date(T0, dep, arr, mu)
 
 end 
 
+function [r_Mi, Ti] = find_trans_theta(dL_des, T0, Mars, Earth)
+    
+    % get departure state 
+    [r_E0, ~, oe_E0] = xyz_ecl(T0, Earth); 
+    L_E0 = oe_E0(4); 
+    r_dep = r_E0; 
 
+    % get arrival state 
+    [r_M0, ~, oe_M0] = xyz_ecl(T0, Mars); 
+    L_Mi = oe_M0(4); 
+    r_arr = r_M0; 
+    
+    r_dep = r_dep / norm(r_dep); 
+    r_arr = r_arr / norm(r_arr); 
+
+    theta = acosd(dot(r_arr, r_dep)); 
+    err = abs(theta - dL_des); 
+
+    i = 0; 
+    while err > 0.01 || L_E0 > L_Mi  
+
+        % if Mars "ahead" of earth 
+        if L_Mi > L_E0
+            % increment time "smart" 
+            if err > 10 
+                di = 1; 
+            elseif err > 1
+                di = 0.1; 
+            elseif err > 0.1 
+                di = 0.01; 
+            else
+                di = 0.001; 
+            end 
+            
+        % if Earth "ahead" of Mars 
+        else
+            di = 1; 
+        end 
+        i = i + di; 
+        Ti = T0 + i; 
+
+        % get arrival state 
+        [r_Mi, ~, oe_Mi] = xyz_ecl(Ti, Mars); 
+        r_arr = r_Mi; 
+        L_Mi = oe_Mi(4); 
+
+        % calc transfer angle 
+        r_arr = r_arr / norm(r_arr); 
+        theta = acosd(dot(r_arr, r_dep)); 
+
+        % transfer angle error 
+        err = abs(theta - dL_des); 
+
+    end 
+
+end 
 

@@ -82,7 +82,9 @@ Combing Equations \ref{eq:Lf1} and \ref{eq:Lf2} result in:
     \Delta t = \frac{\Delta L_{des} + L_{E_i} - L_{M_i}}{ \dot{L_M} }
 \end{equation}
 
-The document \textbf{aprx\_pos\_planets.pdf} was used to compute the orbital elements and Cartesian states of Earth and Mars. Once $\Delta t$ and an initial time are known, the positions of the planets are known. 
+The document \textbf{aprx\_pos\_planets.pdf} was used to compute the orbital elements and Cartesian states of Earth and Mars. Once $\Delta t$ and an initial time are known, the positions of the planets are known. The Lambert solver from HW 2 was used to find the time of flight for the minimum energy transfer. 
+
+The above algorithm was iterated until the TOF for the minimum energy transfer aligned with the time for a 60 degree transfer angle between departure and arrival positions to develop. For example, for an outbound trajectory from Earth to Mars, the 60 degree transfer angle is computed between the initial Earth position and the final Mars position. However, Mars still has an initial position, and will take some amount of time which we will call $\Delta t_M$ to reach its final position. The algorithm was iterated until the TOF for the minimum energy transfer aligned with $\Delta t_M$.  
 
 
 % ------------------------- % 
@@ -105,57 +107,67 @@ The synodic period came out to be 2.13526965089401.
 % ------------------------- % 
 \subsection*{B}
 
-The initial date was set to 2451545.0 JD. \\ 
-
-The first date for 60 degree phasing was computed to be 2451859.90006635. \\ 
-
-The time of flight for the minimum energy transfer conic was computed to be 174.476913251305 days for the short path and 202.984519445264 days for the long path. \\  
+The launch date (T0), arrival date (T1), and the time of flight for the 1st launch window are displayed in the figure below. 
 
 \begin{figure}[H]
     \centering 
-    \includegraphics[width=0.7\textwidth]{Prob 1 - T0 to T1.pdf}
+    \includegraphics[width=0.7\textwidth]{Prob 1 - 1st Launch Window.pdf}
     \caption{1st Earth to Mars 60 degrees transfer}
 \end{figure}
 
-The second date for 60 degree phasing was computed to be 2452452.16890137 JD. \\ 
-
-The time of flight for the minimum energy transfer conic was computed to be 206.969049395779 days for the long path and 184.202367869194 days for the short path. \\ 
+The launch date (T0), arrival date (T1), and the time of flight for the 2nd launch window are displayed in the figure below. 
 
 \begin{figure}[H]
     \centering 
-    \includegraphics[width=0.7\textwidth]{Prob 1 - T1 to T2.pdf}
+    \includegraphics[width=0.7\textwidth]{Prob 1 - 2nd Launch Window.pdf}
     \caption{2nd Earth to Mars 60 degrees transfer}
 \end{figure}
 
 % ------------------------- % 
 \subsection*{C}
 
-The date for 60 degree phasing inbound transfer was computed to be 
-2452712.16492299 JD. From the previous outbound date, the wait time is 260 days. \\ 
-
-The time of flight for the minimum energy transfer conic was computed to be 195.61527956253 days for the long path and 163.801713161463 days for the short path. \\ 
+The launch date (T0), arrival date (T1), and the time of flight for the 2nd launch window are displayed in the figure below. 
 
 \begin{figure}[H]
     \centering 
-    \includegraphics[width=0.7\textwidth]{Prob 1 - T2 to T3.pdf}
-    \caption{Mars to Earth 60 degrees inbound transfer}
+    \includegraphics[width=0.7\textwidth]{Prob 1 - Inbound Conic Launch Window.pdf}
+    \caption{Inbound Mars to Earth 60 degrees transfer}
 \end{figure}
-
 
 % \newpage 
 % ================================================================ % 
 \section*{Problem 2}
 
 \subsection*{A}
-In the previous section, the 
+In the previous section, the angle between Earth and Mars was computed using the approximate longitude from \textbf{aprx\_pos\_planets.pdf}. For Problem 2, the 1.85 $^\circ$ inclination of Mars' orbit was factored into the angle calculation. \\ 
+
+The angle between the Earth and Mars position vectors was calculated using dot product. Then, the desired angle between initial Mars and final Mars position was computed. The mean change in longitude rate from \textbf{aprx\_pos\_planets.pdf} was still used to determine the time for the desired arrival planet to go from its initial position to desired final position. \\ 
+
+The launch date (T0), arrival date (T1), and the time of flight for the 2nd launch window are displayed in the figure below. \textbf{The z axis is zoomed in to show the exaggerated inclination of Mars' orbit.}
+
+\begin{figure}[H]
+    \centering 
+    \includegraphics[width=0.7\textwidth]{Prob 2 - 1st Launch Window.pdf}
+    \caption{1st Earth to Mars 60 degrees transfer with Mars inclination}
+\end{figure}
+
+\begin{figure}[H]
+    \centering 
+    \includegraphics[width=0.7\textwidth]{Prob 2 - 2nd Launch Window.pdf}
+    \caption{2nd Earth to Mars 60 degrees transfer with Mars inclination}
+\end{figure}
+
+\begin{figure}[H]
+    \centering 
+    \includegraphics[width=0.7\textwidth]{Prob 2 - Inbound Conic Launch Window.pdf}
+    \caption{Inbound Mars to Earth 60 degrees transfer with Mars inclination}
+\end{figure}
 
 % ------------------------- % 
 \subsection*{B}
 
-
-% ------------------------- % 
-\subsection*{C}
-
+% ================================================================ % 
+% Problem 3 
 
 \newpage
 % ================================================================ % 

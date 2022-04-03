@@ -12,7 +12,9 @@ e = planet.e0 + planet.de * T;
 I = planet.I0 + planet.dI * T; 
 L = planet.L0 + planet.dL * T; 
 if L > 360
-    L = L - 360; 
+    while L > 360
+        L = L - 360; 
+    end 
 end 
 wbar = planet.wbar0 + planet.dwbar * T; 
 Omega = planet.Omega0 + planet.dOmega * T; 
@@ -35,9 +37,9 @@ M = L - wbar;
 % end 
 
 % eccentric anomaly 
-% eps = 1e-6; 
-% E = keplerEq(M * pi/180, e, eps) * 180/pi; 
-E = kepler(M, 180/pi*e); 
+eps = 1e-6; 
+E = keplerEq(M * pi/180, e, eps) * 180/pi; 
+% E = kepler(M, 180/pi*e); 
 
 % heliocentric coordinates in orbital plane, xp algined from focus to
 % perihelion 
