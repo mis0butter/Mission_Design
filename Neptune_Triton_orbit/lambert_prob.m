@@ -1,5 +1,6 @@
 %% RIGHT HERE 
-function [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(X_NS, t0, phi_des, plot_option)
+function [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob ... 
+    (X_NS, t0, phi_des, plot_option)
 
 global const 
 
@@ -10,7 +11,7 @@ et_t0   = cspice_str2et( t0 );
 
 % get states --> Neptune to Triton
 target   = 'Triton';
-frame    = 'J2000';
+frame    = 'ECLIPJ2000';
 observer = 'Neptune';
 abcorr   = 'NONE';
 
@@ -29,22 +30,35 @@ phi_r = acosd( dot(r_S, r_T) / (norm(r_S)*norm(r_T)) );
 phi_v = acosd( dot(v_S, v_T) / (norm(v_S)*norm(v_T)) ); 
 
 i = 0; 
+X_NT_hist = []; 
 while abs(phi_r - phi_des) > 0.01
     
-    % propagate by 0.1 day 
-    i  = i + 0.01; 
+    % propagate days 
+    if abs(phi_r - phi_des) > 1
+        i = i + 0.01; 
+    elseif abs(phi_r - phi_des) > 0.1 
+        i = i + 0.001;         
+    else 
+        i = i + 0.0001; 
+    end 
     et = et_t0 + i*86400; 
     
     % get velocity 
     X_NT  = spice_state(et, target, frame, abcorr, observer); 
     r_T = X_NT(1:3); 
     v_T = X_NT(4:6); 
+    
+    % save 
+    X_NT_hist = [X_NT_hist; X_NT]; 
 
     % get angle 
     phi_r = acosd( dot(r_S, r_T) / (norm(r_S)*norm(r_T)) ); 
     phi_v = acosd( dot(v_S, v_T) / (norm(v_S)*norm(v_T)) ); 
     
 end 
+
+% find delta time 
+d_et = et - et_t0; 
 
 % units in km 
 rd_S = r_S' ; 
@@ -53,7 +67,7 @@ vd_S = v_S' ;
 va_T = v_T ; 
 
 % propagate to get full Triton orbit 
-X_NT_hist = []; 
+X_NT_fhist = []; 
 target   = 'Triton';
 for i = 0 : 0.01 : 6
     
@@ -63,22 +77,22 @@ for i = 0 : 0.01 : 6
     X_NT  = spice_state(et, target, frame, abcorr, observer); 
     
     % save Mars vector 
-    X_NT_hist = [X_NT_hist; X_NT]; 
+    X_NT_fhist = [X_NT_fhist; X_NT]; 
 end 
 
 OE0 = rvOrb.rv2orb(X_NS, const.muN); 
 T0 = 2*pi*sqrt( OE0(1)^3 / const.muN ); 
-
-% propagate to get full satellite orbit 
-X_NS_hist = []; 
 
 % set ode45 params 
 rel_tol = 1e-10;         % 1e-14 accurate; 1e-6 coarse 
 abs_tol = 1e-10; 
 options = odeset('reltol', rel_tol, 'abstol', abs_tol ); 
 
-[t, X_NS_hist] = ode45(@fn.EOM, [0 : 10 : T0], X_NS, options); 
+% propagate to get full (initial) satellite orbit 
+[t, X_NS_fhist] = ode45(@fn.EOM, [0 T0], X_NS, options); 
 
+% propagate to get how far the satellite would have traveled, no burn 
+[t, X_NS_hist] = ode45(@fn.EOM, [0 d_et], X_NS, options); 
 
     
 %% Part 1a
@@ -107,7 +121,7 @@ a_hist  = [];
 km2AU = 149598073; 
 
 % loop 
-for a = amin : 0.001*km2AU : 2*km2AU
+for a = amin : 0.001*amin : 2*amin
 
     % time of flight 
     [ell_1, ell_2] = a2tof(s, c, a, rd_S, ra_T, vd_S, va_T); 
@@ -135,7 +149,7 @@ for a = amin : 0.001*km2AU : 2*km2AU
 end 
 
 % dt_hist_years = dt_hist / 365; 
-a_hist_AU     = a_hist / km2AU; 
+% a_hist     = a_hist / km2AU; 
 
 %% plot 
 
@@ -145,30 +159,30 @@ if plot_option > 0
     pos = [100 100 700 700]; 
     figure('name', fname, 'position', pos)
         subplot(3,1,1)
-            plot(a_hist_AU, ell_1_hist.dt_s); hold on; 
-            plot(a_hist_AU, ell_1_hist.dt_l); hold on; 
-            plot(a_hist_AU, ell_2_hist.dt_s); hold on; 
-            plot(a_hist_AU, ell_2_hist.dt_l); hold on; 
+            plot(a_hist, ell_1_hist.dt_s); hold on; 
+            plot(a_hist, ell_1_hist.dt_l); hold on; 
+            plot(a_hist, ell_2_hist.dt_s); hold on; 
+            plot(a_hist, ell_2_hist.dt_l); hold on; 
             legend('ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
             ylabel('TOF (days)') 
             title('a vs. TOF') 
         subplot(3,1,2) 
-            plot(a_hist_AU, ell_1_hist.phi_ds); hold on; 
-            plot(a_hist_AU, ell_1_hist.phi_dl); 
-            plot(a_hist_AU, ell_2_hist.phi_ds); 
-            plot(a_hist_AU, ell_2_hist.phi_dl); 
+            plot(a_hist, ell_1_hist.phi_ds); hold on; 
+            plot(a_hist, ell_1_hist.phi_dl); 
+            plot(a_hist, ell_2_hist.phi_ds); 
+            plot(a_hist, ell_2_hist.phi_dl); 
             legend('ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside')
             title('Ellipses 1 and 2: a vs. departure angles'); 
             ylabel('deg') 
         subplot(3,1,3) 
-            plot(a_hist_AU, ell_1_hist.phi_as); hold on; 
-            plot(a_hist_AU, ell_1_hist.phi_al); 
-            plot(a_hist_AU, ell_2_hist.phi_as); 
-            plot(a_hist_AU, ell_2_hist.phi_al); 
+            plot(a_hist, ell_1_hist.phi_as); hold on; 
+            plot(a_hist, ell_1_hist.phi_al); 
+            plot(a_hist, ell_2_hist.phi_as); 
+            plot(a_hist, ell_2_hist.phi_al); 
             legend('ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside')
             title('Ellipses 1 and 2: a vs. arrival angles'); 
             ylabel('deg') 
-            xlabel('a (AU)'); 
+            xlabel('a (km)'); 
 
         sgtitle(['Lambert Problem: \phi = ' num2str(phi_des) ' deg'])
     
@@ -192,7 +206,7 @@ figure('name', fname, 'position', pos)
         [rv_hist, oe_hist] = prop_probe ... 
             (ell_1_hist, rd_S, ra_T, 'short', a_ind);         
         ftitle = 'Ellipse 1 Short'; 
-        plot_probe(rv_hist, X_NS_hist, X_NS_hist, rd_S, ra_T, ftitle) 
+        plot_probe(rv_hist, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle) 
         
     % subplot 2 
     subplot(2,2,2) 
@@ -200,8 +214,7 @@ figure('name', fname, 'position', pos)
         [rv_hist, oe_hist] = prop_probe ... 
             (ell_1_hist, rd_S, ra_T, 'long', a_ind); 
         ftitle = 'Ellipse 1 Long'; 
-        plot_probe(rv_hist, X_NS_hist, X_NS_hist, rd_S, ra_T, ftitle) 
-    
+        plot_probe(rv_hist, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle)     
 
     % subplot 3 
     subplot(2,2,3) 
@@ -209,7 +222,7 @@ figure('name', fname, 'position', pos)
         [rv_hist, oe_hist] = prop_probe ... 
             (ell_2_hist, rd_S, ra_T, 'short', a_ind);         
         ftitle = 'Ellipse 2 Short'; 
-        plot_probe(rv_hist, X_NS_hist, X_NS_hist, rd_S, ra_T, ftitle) 
+        plot_probe(rv_hist, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle) 
 
     % subplot 4 
     subplot(2,2,4) 
@@ -217,7 +230,7 @@ figure('name', fname, 'position', pos)
         [rv_hist, oe_hist] = prop_probe ... 
             (ell_2_hist, rd_S, ra_T, 'long', a_ind);         
         ftitle = 'Ellipse 2 Long'; 
-        plot_probe(rv_hist, X_NS_hist, X_NS_hist, rd_S, ra_T, ftitle) 
+        plot_probe(rv_hist, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle) 
 
     sgtitle(['Lambert Problem: \phi = ' num2str(phi_des) ' deg'])
     
@@ -239,18 +252,33 @@ end
 
 %% subfunctions 
 
-function plot_probe(rv_hist, X_sunE_hist, X_sunM_hist, rd_E, ra_M, ftitle) 
+function plot_probe(rv_hist, X_sunM_hist, X_NS_hist, X_sunE_hist, X_NT_hist, rd_E, ra_M, ftitle) 
 
-    z_rv = zeros(length(rv_hist), 1); 
+    zn = zeros(length(rv_hist), 1); 
     z_E  = zeros(length(X_sunE_hist), 1); 
     z_M  = zeros(length(X_sunM_hist), 1); 
+    
+    len = round(length(X_sunM_hist)/6); 
 
-    plot3([z_rv rv_hist(:,1)], [z_rv rv_hist(:,2)], [z_rv rv_hist(:,3)], 'g', 'linewidth', 2); 
-    hold on; 
+%     plot3([zn rv_hist(:,1)], [zn rv_hist(:,2)], [zn rv_hist(:,3)], 'g', 'linewidth', 2); 
+    plot3([rv_hist(:,1)], [rv_hist(:,2)], [rv_hist(:,3)], 'g', 'linewidth', 2); 
+    hold on; grid on; 
     scatter3([rd_E(1)], [rd_E(2)], [rd_E(3)], 80, 'go', 'linewidth', 2 );
     scatter3([ra_M(1)], [ra_M(2)], [ra_M(3)], 80, 'g^', 'linewidth', 2 ); 
-    plot3([z_E X_sunE_hist(:,1)], [z_E X_sunE_hist(:,2)], [z_E X_sunE_hist(:,3)], 'b--')
-    plot3([z_M X_sunM_hist(:,1)], [z_M X_sunM_hist(:,2)], [z_M X_sunM_hist(:,3)], 'r--')
+    
+    plot3([X_sunE_hist(:,1)], [X_sunE_hist(:,2)], [X_sunE_hist(:,3)], 'b--')
+    plot3(X_NT_hist(:,1), X_NT_hist(:,2), X_NT_hist(:,3), 'b', 'linewidth', 2)
+    plot3(X_NT_hist(1,1), X_NT_hist(1,2), X_NT_hist(1,3), 'bo')
+    plot3(X_NT_hist(end,1), X_NT_hist(end,2), X_NT_hist(end,3), 'b^')
+    
+    plot3([X_sunM_hist(:,1)], [X_sunM_hist(:,2)], [X_sunM_hist(:,3)], 'r--')
+    plot3([X_NS_hist(:,1)], [X_NS_hist(:,2)], [X_NS_hist(:,3)], 'r', 'linewidth', 2)
+    plot3(X_sunM_hist(1,1), X_sunM_hist(1,2), X_sunM_hist(1,3), 'ro'); 
+    plot3([X_NS_hist(end,1)], [X_NS_hist(end,2)], [X_NS_hist(end,3)], 'r^')
+    
+    % center 
+    scatter3(0, 0, 0, 'filled'); 
+    
     title(ftitle)
     xlabel('x (km)'); ylabel('y (km)'); zlabel('z (km)'); 
 
@@ -299,7 +327,8 @@ global const
     % propagate orbit 
     oe_hist = oe_probe0; 
     rv_hist = [X_probe0']; 
-    ts = 0.05; % time step     
+%     ts = 0.05; % time step     
+    ts = dt / 1000; 
     for i = 0 : ts : dt
 
         oe = oe_probe0; 
@@ -368,6 +397,7 @@ dt2_l = sqrt( a^3/mu ) * ...
 % convert from seconds to days 
 day2sec = 60*60*24; 
 
+% days? 
 ell_1.dt_s = dt1_s / day2sec; 
 ell_1.dt_l = dt1_l / day2sec; 
 ell_2.dt_s = dt2_s / day2sec; 

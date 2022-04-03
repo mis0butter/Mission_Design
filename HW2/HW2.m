@@ -19,7 +19,7 @@ cspice_furnsh( 'spice_data/pck00010.tpc ')
 % t0      = 'Oct 20, 2020 11:00 AM CST'; 
 t0      = 'May 22, 2020'; 
 
-phi_t_des = 75; 
+phi_t_des = 55; 
 [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(t0, phi_t_des, 1); 
 
 

@@ -222,6 +222,91 @@ T_Nsat_max = 2*pi*sqrt( OE_Nsat_max(1)^3 / const.muN );
 % propagate raised periapsis elliptical orbit 
 [t, X_Nsat_ep] = ode45(@fn.EOM, [0: dt : T_Nsat_max * 0.8], rv_Nsat_max, options); 
 
+%% test lambert 
+
+X_start = rv_Nsat_max'; 
+
+phi_des = 75; 
+plot_option = 1; 
+[ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(X_start, t0, phi_des, plot_option);
+
+% % BETTADPUR LAMBERT FN 
+% [ell_1, ell_2] = bett_lambert_NT(X_start, t0, phi_des, const, plot_option); 
+
+phi_d_hist  = []; 
+phi_a_hist  = []; 
+tof_hist = []; 
+phi_t_hist = []; 
+
+phi0 = 15; 
+plot_option = 0; 
+for phi = [ phi0 : 15 : 165] 
+    
+    phi_t_des = phi; 
+    [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(X_start, t0, phi_t_des, plot_option);
+%     [ell_1_min, ell_2_min] = lambert_prob(t0, phi_t_des, 0); 
+    
+    % departure angle: 
+    % (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+    phi_d_hist = [phi_d_hist; ... 
+        ell_1_min.phi_ds, ell_1_min.phi_dl, ell_2_min.phi_ds, ell_2_min.phi_dl]; 
+
+    % arrival angle 
+    % (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+    phi_a_hist = [phi_a_hist; ... 
+        ell_1_min.phi_as, ell_1_min.phi_al, ell_2_min.phi_as, ell_2_min.phi_al]; 
+
+    % time of flight 
+    % (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+    tof_hist = [tof_hist; ... 
+        ell_1_min.dt_s, ell_1_min.dt_l, ell_2_min.dt_s, ell_2_min.dt_l]; 
+
+    % transfer angle 
+    phi_t_hist = [phi_t_hist; phi_t_des]; 
+        
+end 
+
+
+colors = {'k', 'b', 'r', 'g'}; 
+style = {'p', '^', '--', '.'}; 
+lwidth = [3, 1.5, 1, 1]; 
+
+figure('position', [100 100 700 700])
+    subplot(3,1,1) 
+        hold on;
+        for i = 1:4
+%             scatter(phi_t_hist, phi_d_hist(:,i), 4, colors{i});  
+            h(i) = plot(phi_t_hist, phi_d_hist(:,i), [colors{i} style{i}]); 
+        end 
+        title('Departure Angle')
+        ylabel('deg') 
+        legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+    
+    subplot(3,1,2) 
+        hold on;
+        for i = 1:4
+%             scatter(phi_t_hist, phi_a_hist(:,i), 4, colors{i});  
+            h(i) = plot(phi_t_hist, phi_a_hist(:,i), [colors{i} style{i}]); 
+        end 
+        title('Arrival Angle') 
+        ylabel('deg') 
+        legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+        
+    subplot(3,1,3) 
+        hold on; 
+        for i = 1:4
+%             scatter(phi_t_hist, tof_hist(:,i), 4, colors{i});  
+            h(i) = plot(phi_t_hist, tof_hist(:,i), [colors{i} style{i}]); 
+        end 
+        title('Time of Flight') 
+        ylabel('days') 
+        legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+        
+    xlabel('Transfer Angle Phi (deg)') 
+    sgtitle('Min Energy Parameters') 
+
+%%
+
 % ------------------------------------------------------------------------ 
 % 1st RAAN change maneuver 
 
@@ -289,6 +374,8 @@ T_Nsat_raan = 2*pi*sqrt( oe_raan_i(1)^3 / const.muN );
 % propagate RAAN burn 
 [t, X_Nsat_RAAN] = ode45(@fn.EOM, [0: dt : T_Nsat_raan*0.9], rv_raan_i, options); 
 
+% [t, X_Nsat_RAAN] = RAAN_change(X_Nsat_ep, const, OE_T, dt, options); 
+
 % ------------------------------------------------------------------------ 
 % 1st inclination change maneuver 
 
@@ -297,6 +384,88 @@ T_Nsat_raan = 2*pi*sqrt( oe_raan_i(1)^3 / const.muN );
 [t, X_Nsat_ei3] = incl_change(X_Nsat_ei2, OE_T, dt, const, options); 
 [t, X_Nsat_ei4] = incl_change(X_Nsat_ei3, OE_T, dt, const, options); 
 
+%% test lambert again 
+
+X_start = X_Nsat_ei4(round(end/2),:)'; 
+
+phi_des = 75; 
+plot_option = 1; 
+[ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(X_start, t0, phi_des, plot_option);
+
+% % BETTADPUR LAMBERT FN 
+% [ell_1, ell_2] = bett_lambert_NT(X_start, t0, phi_des, const, plot_option); 
+
+phi_d_hist  = []; 
+phi_a_hist  = []; 
+tof_hist = []; 
+phi_t_hist = []; 
+
+phi0 = 15; 
+plot_option = 0; 
+for phi = [ phi0 : 15 : 165] 
+    
+    phi_t_des = phi; 
+    [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(X_start, t0, phi_t_des, plot_option);
+%     [ell_1_min, ell_2_min] = lambert_prob(t0, phi_t_des, 0); 
+    
+    % departure angle: 
+    % (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+    phi_d_hist = [phi_d_hist; ... 
+        ell_1_min.phi_ds, ell_1_min.phi_dl, ell_2_min.phi_ds, ell_2_min.phi_dl]; 
+
+    % arrival angle 
+    % (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+    phi_a_hist = [phi_a_hist; ... 
+        ell_1_min.phi_as, ell_1_min.phi_al, ell_2_min.phi_as, ell_2_min.phi_al]; 
+
+    % time of flight 
+    % (1) ELL 1 SHORT, (2) ELL 1 LONG, (3) ELL 2 SHORT, (4) ELL 2 LONG 
+    tof_hist = [tof_hist; ... 
+        ell_1_min.dt_s, ell_1_min.dt_l, ell_2_min.dt_s, ell_2_min.dt_l]; 
+
+    % transfer angle 
+    phi_t_hist = [phi_t_hist; phi_t_des]; 
+        
+end 
+
+
+colors = {'k', 'b', 'r', 'g'}; 
+style = {'p', '^', '--', '.'}; 
+lwidth = [3, 1.5, 1, 1]; 
+
+figure('position', [100 100 700 700])
+    subplot(3,1,1) 
+        hold on;
+        for i = 1:4
+%             scatter(phi_t_hist, phi_d_hist(:,i), 4, colors{i});  
+            h(i) = plot(phi_t_hist, phi_d_hist(:,i), [colors{i} style{i}]); 
+        end 
+        title('Departure Angle')
+        ylabel('deg') 
+        legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+    
+    subplot(3,1,2) 
+        hold on;
+        for i = 1:4
+%             scatter(phi_t_hist, phi_a_hist(:,i), 4, colors{i});  
+            h(i) = plot(phi_t_hist, phi_a_hist(:,i), [colors{i} style{i}]); 
+        end 
+        title('Arrival Angle') 
+        ylabel('deg') 
+        legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+        
+    subplot(3,1,3) 
+        hold on; 
+        for i = 1:4
+%             scatter(phi_t_hist, tof_hist(:,i), 4, colors{i});  
+            h(i) = plot(phi_t_hist, tof_hist(:,i), [colors{i} style{i}]); 
+        end 
+        title('Time of Flight') 
+        ylabel('days') 
+        legend(h, 'ell 1 short', 'ell 1 long', 'ell 2 short', 'ell 2 long', 'location', 'eastoutside'); 
+        
+    xlabel('Transfer Angle Phi (deg)') 
+    sgtitle('Min Energy Parameters') 
 
 %% plot 
 
@@ -378,7 +547,7 @@ if plot_orbit == 1
         % plot_traj(X_Nsat_des, [1 0 1], 'des circ'); 
         % plot_traj(X_Nsat_er, [1 0 1], 'des ell')
 
-        n = line_node(X_Nsat_er) * a * 2; 
+        n = line_node(X_NT) * a * 2; 
         quiver3(0, 0, 0, n(1), n(2), n(3), 'k', 'linewidth', 1.5); 
             txt = 'Des asc. node'; 
             text(n(1), n(2), n(3), txt)
@@ -441,7 +610,7 @@ if plot_orbit == 1
         % inclination change 4
         plot_traj(X_Nsat_ei4, c)
         
-        n = line_node(X_Nsat_ei4) * a * 2; 
+        n = line_node(X_Nsat_ei1) * a * 2; 
         quiver3(0, 0, 0, n(1), n(2), n(3), 'k', 'linewidth', 1.5); 
             txt = 'asc. node'; 
             text(n(1), n(2), n(3), txt)
@@ -533,6 +702,74 @@ function n = line_node(X_Nsat_ep)
 end 
 
 %% subfunctions 
+
+function [t, X_Nsat_RAAN] = RAAN_change(X_Nsat_ep, const, OE_T, dt, options)
+
+% obtain desired (Triton) RAAN 
+oe_ep = rvOrb.rv2orb(X_Nsat_ep(end,:), const.muN); 
+oe_des = oe_ep; 
+oe_des(5) = OE_T(end,5); 
+
+% convert desired OEs back to state 
+X_Nsat_er = rvOrb.orb2rv(oe_des, const.muN); 
+
+% propagate desired changed RAAN elliptical orbit 
+[t, X_Nsat_er] = ode45(@fn.EOM, [0: dt : oe_ep(1) * 0.8], X_Nsat_er, options); 
+
+% convert to (more) circular 
+oe_cur = oe_ep;
+oe_cur(2) = 0.0001; 
+% X_Nsat_cur = rvOrb.orb2rv(oe_cur, const.muN); 
+% [t, X_Nsat_cur] = ode45(@fn.EOM, [0: dt : T_Nsat_max*0.9], X_Nsat_cur, options); 
+
+oe_des(2) = 0.0001; 
+% X_Nsat_des = rvOrb.orb2rv(oe_des, const.muN); 
+% [t, X_Nsat_des] = ode45(@fn.EOM, [0: dt : T_Nsat_max*0.9], X_Nsat_des, options); 
+
+% delta RAAN, incl, arg peri 
+d_RAAN = oe_cur(5) - oe_des(5); 
+i = oe_cur(3); 
+
+% burn angle 
+vnu = acos( cos(i)*cos(i) + sin(i)*sin(i) * cos(d_RAAN) ); 
+
+% solve for location of burn (initial) 
+u_i = acos( tan(i) * ( cos(d_RAAN) - cos(vnu) )/sin(vnu) ); 
+w = oe_cur(4); 
+nu_i = u_i - w; 
+
+% burn at nu (initial) 
+oe_raan_i = oe_ep; 
+oe_raan_i(6) = nu_i ; 
+rv_raan_i = rvOrb.orb2rv(oe_raan_i, const.muN); 
+r_raan_i = rv_raan_i(1:3); 
+v_raan_i = rv_raan_i(4:6); 
+
+% solve for location of burn (final)
+u_f = acos( cos(i) * sin(i) * ( 1 - cos(d_RAAN) )/sin(vnu) ); 
+w = oe_des(4); 
+nu_f = u_f - w; 
+
+% burn at nu (final) 
+oe_raan_f = oe_des; 
+oe_raan_f(6) = nu_f ;    
+rv_raan_f = rvOrb.orb2rv(oe_raan_f, const.muN); 
+r_raan_f = rv_raan_f(1:3); 
+v_raan_f = rv_raan_f(4:6); 
+
+% delta v 
+dv_raan = v_raan_f - v_raan_i; 
+dv_raan_mag = 2*norm(v_raan_i) * sin(vnu/2); 
+dv_raan = dv_raan / norm(dv_raan) * dv_raan_mag; 
+rv_raan_i(4:6) = rv_raan_i(4:6) + dv_raan; 
+
+oe_raan_i = rvOrb.rv2orb(rv_raan_i, const.muN); 
+T_Nsat_raan = 2*pi*sqrt( oe_raan_i(1)^3 / const.muN ); 
+
+% propagate RAAN burn 
+[t, X_Nsat_RAAN] = ode45(@fn.EOM, [0: dt : T_Nsat_raan*0.9], rv_raan_i, options); 
+
+end 
 
 function [t, X_Nsat_ei] = incl_change(X_Nsat_ep, OE_T, dt, const, options)
 

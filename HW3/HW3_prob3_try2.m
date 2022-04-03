@@ -117,7 +117,7 @@ end
 %% Hohmann plot 
 
 leg_hist = []; 
-ftitle = 'Hohmann Transfer'; 
+ftitle = 'Problem 3 - Hohmann Transfer'; 
 figure('name', ftitle, 'position', [50 50 700 500])
 
     % departure 
@@ -168,6 +168,19 @@ figure('name', ftitle, 'position', [50 50 700 500])
 mu_E = 3.986004418e5; 
 mu_sun = mu; 
 mu_M = 0.042828e6; 
+
+% mass 
+m_E = 5.9724e24; 
+m_sun = 1988500e24; 
+m_M = 0.64169e24;
+
+% SOI 
+r_SOI_Esun_ana = ( m_E/m_sun )^(2/5)*a_E; 
+r_SOI_Msun_ana = ( m_M/m_sun )^(2/5)*a_M; 
+disp('Analytical r_SOI_Esun norm: ') 
+disp(norm(r_SOI_Esun_ana)) 
+disp('Analytical r_SOI_Msun norm: ') 
+disp(norm(r_SOI_Msun_ana)) 
 
 % initialize 
 a_Esat_hist = []; 
@@ -241,55 +254,9 @@ for i = 1:length(X_sunsat_hist)
 
     
 end 
-
-t_days = t/86400; 
-
-ftitle = 'Mars Gravitational Acceleration'; 
-% plot accelerations 
-pos = pos + [50 0 0 0]; 
-figure('name', ftitle, 'position', pos)
-
-    subplot(2,1,1) 
-    
-        semilogy(t_days, a_Esat_hist, 'linewidth', 1.2); 
-        hold on; grid on; 
-        semilogy(t_days, a_sunsat_hist, '--','linewidth', 1.2); 
-        semilogy(t_days, a_pert_Esun_hist, 'linewidth', 1.2); 
-        semilogy(t_days, a_pert_sunE_hist, '--', 'linewidth', 1.2); 
-%         semilogy((et-et_t0)/86400, a_dist_Esun_P_hist, '-^'); 
-        legend('2body E-sat', '2body sun-sat', 'pert: E central, sun 3rd', ... 
-            'pert: sun central, E 3rd', 'location', 'best')
-        ylabel('km/s^2')
-        title('Earth Gravitational Acceleration')
-
-        
-    subplot(2,1,2) 
-        semilogy(t_days, a_Msat_hist, 'linewidth', 1.2); 
-        hold on; grid on; 
-        semilogy(t_days, a_sunsat_hist, '--','linewidth', 1.2); 
-        semilogy(t_days, a_pert_Msun_hist, 'linewidth', 1.2); 
-        semilogy(t_days, a_pert_sunM_hist, '--', 'linewidth', 1.2); 
-
-        legend('2body M-sat', '2body sun-sat', 'pert: M central, 3rd ', ... 
-            'pert: sun central, M 3rd', 'location', 'best')
-        ylabel('km/s^2')
-        title(ftitle); 
-    
-        xlabel('Days') 
         
         
 %% SOI crossings 
-
-% mass 
-m_E = 5.9724e24; 
-m_sun = 1988500e24; 
-m_M = 0.64169e24;
-
-% SOI 
-r_SOI_Esun_ana = ( m_E/m_sun )^(2/5)*a_E; 
-r_SOI_Msun_ana = ( m_M/m_sun )^(2/5)*a_M; 
-disp('Analytical r_SOI_Esun norm: ') 
-disp(norm(r_SOI_Esun_ana)) 
 
 dt = t(2) - t(1); 
 for i = 1:length(a_Msat_hist)
@@ -331,8 +298,97 @@ i_min = find(dratio_Msun == min(dratio_Msun));
 t_i_min_Msun = t(i_min); 
 
 
+t_days = t/86400; 
+
+ftitle = 'Problem 3 - Gravitational Acceleration'; 
+% plot accelerations 
+pos = pos + [50 0 0 0]; 
+figure('name', ftitle, 'position', pos)
+
+    subplot(2,1,1) 
+    
+        semilogy(t_days, a_Esat_hist, 'linewidth', 1.2); 
+        hold on; grid on; 
+        semilogy(t_days, a_sunsat_hist, '--','linewidth', 1.2); 
+        semilogy(t_days, a_pert_Esun_hist, 'linewidth', 1.2); 
+        semilogy(t_days, a_pert_sunE_hist, '--', 'linewidth', 1.2); 
+%         semilogy((et-et_t0)/86400, a_dist_Esun_P_hist, '-^'); 
+        xline(t_i_min_Esun / 86400, 'b--', 'linewidth', 1.2); 
+        
+        legend('2body E-sat', '2body sun-sat', 'pert: E central, sun 3rd', ... 
+            'pert: sun central, E 3rd', 'Earth SOI', 'location', 'best')
+        ylabel('km/s^2')
+        title('Earth Gravitational Acceleration')
+
+%         % Earth SOI 
+%         xlim([0, t_i_min_Esun/86400 + 1])
+        
+    subplot(2,1,2) 
+        semilogy(t_days, a_Msat_hist, 'linewidth', 1.2); 
+        hold on; grid on; 
+        semilogy(t_days, a_sunsat_hist, '--','linewidth', 1.2); 
+        semilogy(t_days, a_pert_Msun_hist, 'linewidth', 1.2); 
+        semilogy(t_days, a_pert_sunM_hist, '--', 'linewidth', 1.2); 
+        xline(t_i_min_Msun / 86400, 'b--', 'linewidth', 1.2); 
+        
+        legend('2body M-sat', '2body sun-sat', 'pert: M central, 3rd ', ... 
+            'pert: sun central, M 3rd', 'Mars SOI', 'location', 'best')
+        ylabel('km/s^2')
+        title('Mars Gravitational Acceleration'); 
+        
+%         % Mars SOI 
+%         xlim([t_i_min_Msun/86400 - 1, t_days(end) + 1])
+        
+        sgtitle(ftitle); 
+    
+        xlabel('Days') 
+        
+
+ftitle = 'Problem 3 - Gravitational Acceleration - SOI Vicinity'; 
+% plot accelerations 
+pos = pos + [50 0 0 0]; 
+figure('name', ftitle, 'position', pos)
+
+    subplot(2,1,1) 
+    
+        semilogy(t_days, a_Esat_hist, 'linewidth', 1.2); 
+        hold on; grid on; 
+        semilogy(t_days, a_sunsat_hist, '--','linewidth', 1.2); 
+        semilogy(t_days, a_pert_Esun_hist, 'linewidth', 1.2); 
+        semilogy(t_days, a_pert_sunE_hist, '--', 'linewidth', 1.2); 
+%         semilogy((et-et_t0)/86400, a_dist_Esun_P_hist, '-^'); 
+        xline(t_i_min_Esun / 86400, 'b--', 'linewidth', 1.2); 
+        
+        legend('2body E-sat', '2body sun-sat', 'pert: E central, sun 3rd', ... 
+            'pert: sun central, E 3rd', 'Earth SOI', 'location', 'best')
+        ylabel('km/s^2')
+        title('Earth Gravitational Acceleration')
+
+        % Earth SOI 
+        xlim([0, t_i_min_Esun/86400 + 1])
+        
+    subplot(2,1,2) 
+        semilogy(t_days, a_Msat_hist, 'linewidth', 1.2); 
+        hold on; grid on; 
+        semilogy(t_days, a_sunsat_hist, '--','linewidth', 1.2); 
+        semilogy(t_days, a_pert_Msun_hist, 'linewidth', 1.2); 
+        semilogy(t_days, a_pert_sunM_hist, '--', 'linewidth', 1.2); 
+        xline(t_i_min_Msun / 86400, 'b--', 'linewidth', 1.2); 
+        
+        legend('2body M-sat', '2body sun-sat', 'pert: M central, 3rd ', ... 
+            'pert: sun central, M 3rd', 'Mars SOI', 'location', 'best')
+        ylabel('km/s^2')
+        title('Mars Gravitational Acceleration'); 
+        
+        % Mars SOI 
+        xlim([t_i_min_Msun/86400 - 1, t_days(end) + 1])
+        
+        sgtitle(ftitle); 
+    
+        xlabel('Days') 
+
 % ------------------------------------------------------------------------
-ftitle = 'Earth, Mars, and Sun acceleration ratios'; 
+ftitle = 'Problem 3 - Earth, Mars, and Sun acceleration ratios'; 
 % plot rate of ratio change 
 pos = pos + [50 0 0 0]; 
 figure('name', ftitle, 'position', pos)
@@ -401,7 +457,7 @@ figure('name', ftitle, 'position', pos)
     xlabel('Time (days)') 
 
 % ------------------------------------------------------------------------
-ftitle = {'Earth, Mars, and Sun acceleration ratios'; 'SOI vicinity'}; 
+ftitle = {'Problem 3 - Earth, Mars, and Sun acceleration ratios - SOI vicinity'}; 
 % plot rate of ratio change 
 pos = pos + [50 0 0 0]; 
 figure('name', ftitle{1}, 'position', pos)
@@ -488,7 +544,7 @@ for i = 1:length(X_sunsat_hist)
     
 end 
 
-ftitle = 'Flight Path Angle'; 
+ftitle = 'Problem 3 - Flight Path Angle'; 
 pos = pos + [50 0 0 0]; 
 figure('name', ftitle, 'position', pos)
 

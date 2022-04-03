@@ -83,7 +83,12 @@ end
 [r_E1, ~, oe_E1] = xyz_ecl(T + dt_days1, Earth); 
 [r_M1, ~, oe_M1] = xyz_ecl(T + dt_days1, Mars); 
 phi = acosd(dot(r_E0, r_M1) / ( norm(r_E0)*norm(r_M1) ))
+disp('1st launch window: ')
+disp('E0 longitude = ') 
 L_E0 = oe_E0(4)
+disp('M0 longitude = ') 
+L_M1 = oe_M0(4)
+disp('M1 longitude = ') 
 L_M1 = oe_M1(4)
 
 T0 = T; 
@@ -135,7 +140,12 @@ end
 [r_E1, ~, oe_E1] = xyz_ecl(T + dt_days1, Earth); 
 [r_M1, ~, oe_M1] = xyz_ecl(T + dt_days1, Mars); 
 phi = acosd(dot(r_E0, r_M1) / ( norm(r_E0)*norm(r_M1) ))
+disp('2nd launch window: ')
+disp('E0 longitude = ') 
 L_E0 = oe_E0(4)
+disp('M0 longitude = ') 
+L_M1 = oe_M0(4)
+disp('M1 longitude = ') 
 L_M1 = oe_M1(4)
 
 T0 = T; 
@@ -177,7 +187,7 @@ T = T1;
 while abs(dt_days1 - tof1_1) > 1 && abs(dt_days1 - tof1_2) > 1
 
     T = T + 1; 
-    [dt_days1, tof1_1, tof1_2] = launch_date(T, Mars, Earth, mu) 
+    [dt_days1, tof1_1, tof1_2] = launch_date(T, Mars, Earth, mu); 
     
 end 
 
@@ -187,8 +197,13 @@ end
 [r_E1, ~, oe_E1] = xyz_ecl(T + dt_days1, Earth); 
 [r_M1, ~, oe_M1] = xyz_ecl(T + dt_days1, Mars); 
 phi = acosd(dot(r_E0, r_M1) / ( norm(r_E0)*norm(r_M1) ))
+disp('Inbound conic launch window: ')
+disp('E0 longitude = ') 
+L_E0 = oe_E0(4)
+disp('E1 longitude = ') 
 L_E1 = oe_E1(4)
-L_M0 = oe_M0(4)
+disp('M0 longitude = ') 
+L_M1 = oe_M0(4)
 
 T0 = T; 
 T1 = T0 + dt_days1; 

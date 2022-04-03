@@ -83,14 +83,18 @@ end
 [r_E1, ~, oe_E1] = xyz_ecl(T + dt_days1, Earth); 
 [r_M1, ~, oe_M1] = xyz_ecl(T + dt_days1, Mars); 
 phi = acosd(dot(r_E0, r_M1) / ( norm(r_E0)*norm(r_M1) ))
+disp('1st launch window: ')
+disp('E0 longitude = ') 
 L_E0 = oe_E0(4)
+disp('M0 longitude = ') 
+L_M1 = oe_M0(4)
+disp('M1 longitude = ') 
 L_M1 = oe_M1(4)
 
 T0 = T; 
 T1 = T0 + dt_days1; 
 
 % ok let's do a propagation ... 
-
 r_E_hist_T0T1 = []; 
 r_M_hist_T0T1 = []; 
 for i = 0 : 0.1 : dt_days1
@@ -135,7 +139,12 @@ end
 [r_E1, ~, oe_E1] = xyz_ecl(T + dt_days1, Earth); 
 [r_M1, ~, oe_M1] = xyz_ecl(T + dt_days1, Mars); 
 phi = acosd(dot(r_E0, r_M1) / ( norm(r_E0)*norm(r_M1) ))
+disp('2nd launch window: ')
+disp('E0 longitude = ') 
 L_E0 = oe_E0(4)
+disp('M0 longitude = ') 
+L_M1 = oe_M0(4)
+disp('M1 longitude = ') 
 L_M1 = oe_M1(4)
 
 T0 = T; 
@@ -177,7 +186,7 @@ T = T1;
 while abs(dt_days1 - tof1_1) > 1 && abs(dt_days1 - tof1_2) > 1
 
     T = T + 1; 
-    [dt_days1, tof1_1, tof1_2] = launch_date(T, Mars, Earth, mu) 
+    [dt_days1, tof1_1, tof1_2] = launch_date(T, Mars, Earth, mu);  
     
 end 
 
@@ -187,8 +196,14 @@ end
 [r_E1, ~, oe_E1] = xyz_ecl(T + dt_days1, Earth); 
 [r_M1, ~, oe_M1] = xyz_ecl(T + dt_days1, Mars); 
 phi = acosd(dot(r_E0, r_M1) / ( norm(r_E0)*norm(r_M1) ))
+disp('Inbound conic launch window: ')
+disp('E0 longitude = ') 
+L_E0 = oe_E0(4)
+disp('E1 longitude = ') 
 L_E1 = oe_E1(4)
-L_M0 = oe_M0(4)
+disp('M0 longitude = ') 
+L_M1 = oe_M0(4)
+
 
 T0 = T; 
 T1 = T0 + dt_days1; 
@@ -313,74 +328,31 @@ function [dt_days1, tof1, tof2] = launch_date(T0, dep, arr, mu)
     
     % arrival planet "y" axis 
     arr_y = cross(arr_z, arr_x); 
+    
+    % frame DCM 
+    arr_C_dep = [arr_x'; arr_y'; arr_z']; 
+    dep_C_arr = arr_C_dep'; 
         
-    % rotate ri around desired longitude 
+    % find phi 
     dL_des = 60; 
-    ri_rot = fn.rotate_xyz(ri, dL_des*pi/180, 3); 
-    
-    % now project ri_rot onto arrival orbit normal  
-    ri_proj_h = dot(ri_rot, arr_z) * arr_z; 
-    
-    % obtain projection of ri_rot onto orbit plane 
-    rf = ri_rot - ri_proj_h; 
-    rf = rf / norm(rf); 
-        
-    % actual angle and target angle 
-    phi = acosd(dot(ri, rf)); 
     dL = dL_des; 
+    err = 1e-4; 
+    [phi, rf, ri_proj_h, ri_rot] = calc_phi(dL_des, err, ri, arr_z); 
     
-    err = 1e-3; 
     if phi > dL
         while abs(phi - dL) > err 
 
             dL_des = dL_des - err; 
-            ri_rot = fn.rotate_xyz(ri, dL_des*pi/180, 3); 
-
-            % now project ri_rot onto arrival orbit normal  
-            ri_proj_h = dot(ri_rot, arr_z) * arr_z; 
-
-            % obtain projection of ri_rot onto orbit plane 
-            rf = ri_rot - ri_proj_h; 
-            rf = rf / norm(rf); 
-
-            phi = acosd(dot(ri, rf)); 
+            [phi, rf, ri_proj_h, ri_rot] = calc_phi(dL_des, err, ri, arr_z); 
 
         end 
     else
-        
-        figure()
-    
-        % departure orbit normal 
-        fn.plot3_quiver([0 0 0], [0 0 1], 'k'); 
-        
-        hold on; grid on; 
+        while abs(phi - dL) > err 
 
-        % departure x 
-        fn.plot3_quiver([0 0 0], [1 0 0], 'k'); 
-    
-        % arrival orbit normal 
-        fn.plot3_quiver([0 0 0], arr_z, 'b'); 
-        
-        % arrival x 
-        fn.plot3_quiver([0 0 0], arr_x, 'b'); 
-        
-        % initial planet position 
-        fn.plot3_quiver([0 0 0], ri, 'g'); 
-        
-        % final planet position 
-        fn.plot3_quiver([0 0 0], rf, 'r'); 
-        
-        % rotation vector 
-        fn.plot3_quiver([0 0 0], ri_rot, 'c--'); 
-        
-        % projection vector 
-        fn.plot3_quiver([0 0 0], ri_proj_h*0.5, 'm', 10); 
-        
-        legend('Dep orbit normal', 'Dep x', ... 
-            'Arr orbit normal', 'Arr x', ... 
-            'r_i', 'r_f', 'r_{rot}', 'r_{proj}') 
-        
-        pause 
+            dL_des = dL_des + err; 
+            [phi, rf, ri_proj_h, ri_rot] = calc_phi(dL_des, err, ri, arr_z); 
+
+        end 
         
     end 
     
@@ -399,12 +371,6 @@ function [dt_days1, tof1, tof2] = launch_date(T0, dep, arr, mu)
         dL = dL - 360; 
     end
     
-%     % actual angle between departure & arrival planet 
-%     phi = acosd( dot(r_dep0, r_arr0) / ( norm(r_dep0)*norm(r_arr0) ) ); 
-% 
-%     % true desired angle 
-%     dL_true = phi + dL_des; 
-    
     dL_arr = arr.dL;
     dt_days1 = dL / dL_arr * 100 * 365.25; 
 %     dt_days1 = (dL_des + L_E0 - L_M0) / dL_M * 100 * 365.25; 
@@ -419,6 +385,21 @@ function [dt_days1, tof1, tof2] = launch_date(T0, dep, arr, mu)
     [ell_1, ell_2] = bett_lambert(r_dep0' * au2km, r_arr1' * au2km, mu); 
     tof1 = ell_1.tof / 86400; 
     tof2 = ell_2.tof / 86400; 
+
+end 
+
+function [phi, rf, ri_proj_h, ri_rot] = calc_phi(dL_des, err, ri, arr_z)
+
+    ri_rot = fn.rotate_xyz(ri, dL_des*pi/180, 3); 
+
+    % now project ri_rot onto arrival orbit normal  
+    ri_proj_h = dot(ri_rot, arr_z) * arr_z; 
+
+    % obtain projection of ri_rot onto orbit plane 
+    rf = ri_rot - ri_proj_h; 
+    rf = rf / norm(rf); 
+
+    phi = acosd(dot(ri, rf)); 
 
 end 
 
