@@ -25,6 +25,9 @@ mu_E_m3 = 3.986004418e14;  % m^3/s^2
 mu_E_km3 = mu_E_m3 * ( 1e-3 )^3 ; 
 a0 = (mu_E_km3 / n^2)^(1/3); 
 
+R_E = 6378.1370;        % km 
+w_E = 7.292115e-5;      % rad/s 
+
 oe0 = [a0; e0; i0; w0; O0; M0]; 
 rv0 = rvOrb.orb2rv(oe0, mu_E_km3); 
 
@@ -47,17 +50,19 @@ for i = 1:length(rv)
 end 
 % fn.plot3_xyz(rv); 
 
-% figure()
-%     plot(lla(:,2), lla(:,1), 'b')
-%     hold on; grid on; 
-%     plot(lla(1,2), lla(1,1), 'bo')
-%     plot(lla(end,2), lla(end,1), 'b^')
-%     
-%     plot(lla_1(:,2), lla_1(:,1), 'r')
-%     plot(lla_1(1,2), lla_1(1,1), 'ro')
-%     plot(lla_1(end,2), lla_1(end,1), 'r^')
-%     
-%     xlabel('longitude'); ylabel('latitude'); 
+figure()
+    plot(lla(:,2), lla(:,1), 'b')
+    hold on; grid on; 
+    plot(lla(1,2), lla(1,1), 'bo')
+    plot(lla(end,2), lla(end,1), 'b^')
+    
+    plot(lla_1(:,2), lla_1(:,1), 'r')
+    plot(lla_1(1,2), lla_1(1,1), 'ro')
+    plot(lla_1(end,2), lla_1(end,1), 'r^')
+    
+    xlabel('longitude'); ylabel('latitude'); 
+
+%% problem 1i 
 
 figure()
 lh = plot(lla_1(:, 2), lla_1(:, 1), 'r'); 
@@ -69,15 +74,10 @@ xlim(xl); ylim(yl);
 for i = 1:length(lla_1)
 
     cla 
-
-%     % mathworks ecef2lla 
-%     plot(lla(1,2), lla(1,1), 'bo')
-%     plot(lla(1:i,2), lla(1:i,1), 'b', 'linewidth', 1.5)
-%     plot(lla(end,2), lla(end,1), 'b^')
     
     % my ecef2lla 
     plot(lla_1(1,2), lla_1(1,1), 'ro'); 
-    plot(lla_1(1:i, 2), lla_1(1:i, 1), 'r--'); 
+    plot(lla_1(1:i, 2), lla_1(1:i, 1), 'r'); 
     lh = plot(lla_1(i, 2), lla_1(i, 1), 'r^'); 
     
     title(sprintf( '%d / %d', i, length(lla_1) )); 
@@ -86,15 +86,59 @@ for i = 1:length(lla_1)
 end 
 % plot(lla_1(end,2), lla_1(end,1), 'r^')
 
-%% test 
+%% problem 1ii 
 
-rv_test = [6524.834; 6862.875; 6448.296]; 
-lla_1 = ecef2lla_1(rv_test, oe0, R_E); 
-lla_3 = ecef2lla_3(rv_test, oe0, R_E); 
-lla = ecef2lla(rv_test')';
-lla(1:2) = lla(1:2) * pi/180; 
-lla_2 = ecef2lla_2(rv_test); 
 
+% Axis 3 rotation matrix 
+theta0 = 0; 
+dt = t(2) - t(1); 
+
+lla_rot = lla_1(1,:); 
+rv_rot = rv(1,:); 
+for i = 2:length(lla_1)
+    
+    theta = -w_E * dt * (i-1) + theta0; 
+    C = [   cos(theta) -sin(theta)  0; 
+            sin(theta)  cos(theta)  0;
+            0           0           1   ];
+    rv_rot(i,:) = [C * rv(i,1:3)'; C * rv(i, 4:6)']; 
+        
+    lla_rot(i,:) = ecef2lla_1(rv_rot(i,:)', R_E, mu_E_km3); 
+    lla_rot(i, 1:2) = lla_rot(i, 1:2) * 180/pi; 
+
+
+end 
+
+%% 
+
+figure()
+plot(lla_rot(:, 2), lla_rot(:, 1), 'b'); 
+hold on; grid on; 
+lh = plot(lla_rot(:, 2), lla_rot(:, 1), 'r'); 
+xl = xlim; yl = ylim; 
+
+cla;  
+xlim(xl); ylim(yl); 
+for i = 1:length(lla_rot)
+
+    cla 
+    
+    % fixed Earth 
+    plot(lla_1(1,2), lla_1(1,1), 'ro'); 
+    plot(lla_1(1:i, 2), lla_1(1:i, 1), 'r'); 
+    lh = plot(lla_1(i, 2), lla_1(i, 1), 'r^'); 
+    
+    % rotating Earth 
+    plot(lla_rot(1,2), lla_rot(1,1), 'bo'); 
+    plot(lla_rot(1:i, 2), lla_rot(1:i, 1), 'b'); 
+    lh = plot(lla_rot(i, 2), lla_rot(i, 1), 'b^'); 
+    
+    legend('fixed E', 'rot E') 
+    
+    title(sprintf( '%d / %d', i, length(lla_rot) )); 
+    pause(0.001) 
+    
+end 
 
 
 %% subfunctions 
