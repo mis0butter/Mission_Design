@@ -46,9 +46,9 @@ a = [dU1; dU2; dU3];
 dX(4:6) = dX(4:6) + a; 
 
 % accel due to point mass (not needed when geopotential gravity is present)
-r       = norm(X(1:3)); 
-r_norm  = sqrt( X(1)^2 + X(2)^2 + X(3)^2 ); 
-dX(4:6) = ( - mu / r_norm^3 ) * X(1:3); 
+% r       = norm(X(1:3)); 
+% r_norm  = sqrt( X(1)^2 + X(2)^2 + X(3)^2 ); 
+% dX(4:6) = ( - mu / r_norm^3 ) * X(1:3); 
 
 % ------------------------------------------------------------------------
 % % accel due to lunisolar perturbation 

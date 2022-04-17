@@ -65,6 +65,10 @@
 % function [a,eMag,i,O,o,M,truLon,argLat,lonPer,p] = rv2orb(r,v,mu)
 function oe = rv2orb(rv, mu)
 
+if ~iscolumn(rv)
+    rv = rv'; 
+end 
+
 r = rv(1:3); 
 v = rv(4:6); 
 

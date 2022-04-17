@@ -2,6 +2,21 @@
 
 % 0 = no plot. 1 = plot animation. 2 = plot all at once 
 plot_option = 2; 
+ 
+% Earth 
+Earth.a0 =      1.00000261; 
+Earth.da =      0.00000562; 
+Earth.e0 =      0.01671123; 
+Earth.de =     -0.00004392; 
+Earth.I0 =     -0.00001531; 
+Earth.dI =     -0.01294668;
+Earth.L0 =    100.46457166; 
+Earth.dL =  35999.37244981; 
+Earth.wbar0 = 102.93768193; 
+Earth.dwbar =   0.32327364;
+Earth.Omega0 =  0; 
+Earth.dOmega =  0; 
+
 
 %% Problem 1 
 
@@ -44,16 +59,6 @@ options = odeset('reltol', rel_tol, 'abstol', abs_tol );
 
 % propagate orbit 
 [t, rv_a] = ode45(@fn.EOM, [0 : 15*60], rv0, options); 
-
-Teph = 2451545.0; 
-planet = Earth; 
-[r_ecl, r_p, oe] = xyz_ecl(Teph, planet)
-% ------------------------------------------------------------------------
-% Teph  = ephemeris time (days) 
-% r_ecl = J2000 ecliptic plane coordinates 
-% ------------------------------------------------------------------------
-
-
 
 
 % ------------------------------------------------------------------------
@@ -116,7 +121,7 @@ lla = [];
 lla_1_b = []; 
 for i = 1:length(rv_b)
     
-%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+%     lla_1_b(i,:) = ecef2lla(rv(i,1:3)); 
     lla_1_b(i,:) = ecef2lla_1(rv_b(i,:)', R_E, mu_E_km3); 
     lla_1_b(i, 1:2) = lla_1_b(i, 1:2) * 180/pi; 
     
@@ -163,7 +168,12 @@ abs_tol = 1e-10;
 options = odeset('reltol', rel_tol, 'abstol', abs_tol ); 
 
 % propagate orbit 
-[t, rv_c] = ode45(@fn.EOM_J2, [0 : 86400], rv0, options); 
+T = 2*pi*sqrt(a0^3/mu_E_km3); 
+[t, rv_c] = ode45(@fn.EOM_J2, [0 : T], rv0, options); 
+
+% final oe 
+oef = rvOrb.rv2orb(rv_c(end,:), mu_E_km3); 
+dO = oe0(5) - oef(5); 
 
 lla = []; 
 lla_1_c = []; 
@@ -185,18 +195,67 @@ end
 % ------------------------------------------------------------------------
 % PLOT
 
-fname = '1.c Rotating and Non-Rotating Earth'; 
+fname = '1.c Fixed and Rotating Earth with Secular Precession'; 
 plot_option = 2; 
 plot_gt(plot_option, fname, lla_1_c, lla_rot_c)
 
+
 %% ------------------------------------------------------------------------
 % Precession matches up? 
-oe_a = rvOrb.rv2orb(rv_a(end,:), mu_E_km3); 
-oe_c = rvOrb.rv2orb(rv_c(901,:), mu_E_km3); 
 
-O_a = oe_a(5); 
-O_c = oe_c(5); 
+oe_c0 = rvOrb.rv2orb(rv0, mu_E_km3); 
+dt = 1; 
 
+dO = -3/2 * n * J2 * ( R_E / norm(rv0(1:3)) )^2 * 1/( 1-e0^2 )^2 * cos(i0); 
+dw = -3/4 * n * (R_E / norm(rv0(1:3)))^2 * J2 * (1 - 5*cosd(i0)^2) / (1-e0^2)^2;
+dM = n * (1-3/4*(R_E / norm(rv0(1:3)))^2 * J2 * (1 - 3*cosd(i0)^2) / (1-e0^2)^(3/2));
+
+oe_c = oe_c0; 
+rv_c2 = rv0'; 
+for i = 1 : T
+    
+    oe = oe_c0; 
+    
+    % augment mean anomaly 
+    M0 = oe_c0(6); 
+    M = M0 + dM * (dt*i); 
+    M = mod(M, 2*pi); 
+    oe(6) = M; 
+    
+    % augment RAAN 
+    O0 = oe_c0(5); 
+    O = O0 + dO * (dt*i); 
+    O = mod(O, 2*pi); 
+    oe(5) = O; 
+    
+    % augment perigee 
+    w0 = oe_c0(4); 
+    w = w0 + dw * (dt*i); 
+    w = mod(w, 2*pi); 
+    oe(4) = w; 
+    
+    oe_c(i+1,:) = oe; 
+    rv_c2(i+1,:) = rvOrb.orb2rv(oe, mu_E_km3); 
+    
+end 
+
+lla = []; 
+lla_1_c2 = []; 
+for i = 1:length(rv_c2)
+    
+%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+    lla_1_c2(i,:) = ecef2lla_1(rv_c2(i,:)', R_E, mu_E_km3); 
+    lla_1_c2(i, 1:2) = lla_1_c2(i, 1:2) * 180/pi; 
+    
+end 
+
+% fn.plot3_xyz(rv); 
+% ------------------------------------------------------------------------
+% PLOT
+
+fname = '1.c Fixed and Rotating Earth with Secular Precession'; 
+plot_option = 2; 
+plot_gt(plot_option, fname, lla_1_c2, lla_1_c)
 
 
 %% subfunctions 
@@ -261,6 +320,8 @@ if plot_option == 1
     end 
     
     title(fname) 
+    xlabel('Longitude (deg)'); 
+    ylabel('Latitude (deg)');
 
 elseif plot_option == 2
 
@@ -280,6 +341,8 @@ elseif plot_option == 2
     legend([lh1 lh2], 'fixed E', 'rot E') 
 
     title(fname) 
+    xlabel('Longitude (deg)'); 
+    ylabel('Latitude (deg)');
     
 end 
 
