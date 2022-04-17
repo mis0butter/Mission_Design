@@ -17,7 +17,9 @@ e0 = 0.00048;
 i0 = 51.644 * pi/180;    % deg --> rad
 w0 = 30.4757 * pi/180;   % deg --> rad
 O0 = 0 * pi/180;         % deg --> rad
-M0 = 39.7178 * pi/180;   % deg --> rad (should be true anomaly) 
+% M0 = 39.7178 * pi/180;   % deg --> rad (should be true anomaly) 
+% M0 = (2*pi - w0);        % rad (should be true anomaly) 
+M0 = 0 * pi/180;         % deg --> rad  
 
 % mean motion --> semimajor axis 
 n = 15.50094 / 86400 * (2*pi);   % rev/day --> rad/s 
@@ -133,11 +135,7 @@ end
 
 %% problem 1.b.i 
 
-e0 = 0.00048;   
 i0 = (180 - 51.644) * pi/180;    % deg --> rad
-w0 = 30.4757 * pi/180;   % deg --> rad
-O0 = 0 * pi/180;         % deg --> rad
-M0 = 39.7178 * pi/180;   % deg --> rad (should be true anomaly) 
 
 % mean motion --> semimajor axis 
 n = 15.50094 / 86400 * (2*pi);   % rev/day --> rad/s 
