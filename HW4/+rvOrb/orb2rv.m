@@ -16,7 +16,7 @@
 %i                      [1 x N]                         inclination
 %                                                       (radians)
 %
-%o                      [1 x N]                         Argument of perigee
+%w                      [1 x N]                         Argument of perigee
 %                                                       (radians)
 %
 %O                      [1 x N]                         Right Ascention of
@@ -65,7 +65,7 @@ function [rv] = orb2rv(oe, mu)
 a       = oe(1); 
 e       = oe(2); 
 i       = oe(3); 
-o       = oe(4); 
+w       = oe(4); 
 O       = oe(5); 
 nu      = oe(6); 
 
@@ -79,7 +79,7 @@ p = a * (1 - e^2);
 %     end
     
     %Make all inputs consistent w/ dimensions
-    p = p(:); e = e(:); i = i(:); O = O(:); o = o(:); nu = nu(:);
+    p = p(:); e = e(:); i = i(:); O = O(:); w = w(:); nu = nu(:);
 %     if exist('truLon','var')
 %         truLon = truLon(:); argLat = argLat(:); lonPer = lonPer(:);
 %     end
@@ -106,7 +106,7 @@ p = a * (1 - e^2);
     
     %Create Transformation Matrix
     PQW2IJK = NaN(3,3,size(p,1));
-    cO = cos(O); sO = sin(O); co = cos(o); so = sin(o); ci = cos(i); si = sin(i);
+    cO = cos(O); sO = sin(O); co = cos(w); so = sin(w); ci = cos(i); si = sin(i);
     PQW2IJK(1,1,:) = cO.*co-sO.*so.*ci; PQW2IJK(1,2,:) = -cO.*so-sO.*co.*ci; PQW2IJK(1,3,:) = sO.*si;
     PQW2IJK(2,1,:) = sO.*co+cO.*so.*ci; PQW2IJK(2,2,:) = -sO.*so+cO.*co.*ci; PQW2IJK(2,3,:) = -cO.*si;
     PQW2IJK(3,1,:) = so.*si;            PQW2IJK(3,2,:) = co.*si;             PQW2IJK(3,3,:) = ci;

@@ -1,4 +1,4 @@
-function [rv] = oe2rv(oe)
+function [rv] = oe2rv(oe, mu)
 % ------------------------------------------------------------------------ 
 % Purpose: Convert orbital elements and time past epoch to the classic 
 % Cartesian position and velocity
@@ -6,49 +6,60 @@ function [rv] = oe2rv(oe)
 % Inputs: 
 %   oe      = [6x1] or [1x6] orbital elements 
 %   delta_t = t - t0 time interval 
-%   mu      = Gravity * Mass (of Earth) constant 
+%   mu      = Gravity * Mass constant 
 % 
 % Outputs: 
 %   rv      = position and velocity state vector 
 % ------------------------------------------------------------------------ 
 
-% global delta_t 
-global mu 
+% global mu 
 
+% orbital elements 
 a       = oe(1); 
 e       = oe(2); 
 i       = oe(3); 
-w       = oe(4); 
-O     = oe(5); 
+omega   = oe(4); 
+LAN     = oe(5); 
+
+%% the 6th element 
+M       = oe(6); 
 % M0      = oe(6); 
-nu      = oe(6); 
+% nu      = oe(6); 
 
 % nu is TRUE ANOMALY --> use Kepler's to calculate MEAN ANOMALY 
 % E = 2*atan( sqrt( (1-e)/(1+e) ) * tan(nu/2) ); 
 % M = M0 + sqrt( mu/a^3 ) * (delta_t); 
+%% 
+
 % E = keplerEq(M, e, eps); 
-% E = kepler(M, e); 
-% nu = 2*atan( sqrt( (1+e)/(1-e) ) * tan(E/2) ); 
+E = kepler(M, e); 
+
+nu = 2*atan( sqrt( (1+e)/(1-e) ) * tan(E/2) ); 
 
 p = a * ( 1 - e^2 );            % intermediate variable 
 r = p / ( 1 + e*cos(nu) );      % r_magnitude, polar coordinates 
 
 % Perifocal position and velocity 
-
-r_pf = [ r * cos(nu); r * sin(nu); 0 ]; 
-v_pf = [ -sqrt(mu/p) * sin(nu); sqrt(mu/p) * (e + cos(nu)); 0 ]; 
+r_pf    = zeros(3,1);  
+v_pf    = zeros(3,1); 
+r_pf(3) = 0; 
+v_pf(3) = 0; 
+r_pf(1) = r * cos(nu); 
+r_pf(2) = r * sin(nu); 
+v_pf(1) = -sqrt(mu/p) * sin(nu); 
+v_pf(2) =  sqrt(mu/p) * (e + cos(nu)); 
 
 % Perifocal to ECI transformation, 3-1-3 rotation 
-R11 = cos(O)*cos(w) - sin(O)*sin(w)*cos(i); 
-R12 = -cos(O)*sin(w) - sin(O)*cos(w)*cos(i); 
-R13 = sin(O)*sin(i); 
+R11 = cos(LAN)*cos(omega) - sin(LAN)*sin(omega)*cos(i); 
+R12 = -cos(LAN)*sin(omega) - sin(LAN)*cos(omega)*cos(i); 
+R13 = sin(LAN)*sin(i); 
 
-R21 = sin(O)*cos(w) + cos(O)*sin(w)*cos(i); 
-R22 = -sin(O)*sin(w) + cos(O)*cos(w)*cos(i); 
-R23 = -cos(O)*sin(i); 
+R21 = sin(LAN)*cos(omega) + cos(LAN)*sin(omega)*cos(i); 
+R22 = -sin(LAN)*sin(omega) + cos(LAN)*cos(omega)*cos(i); 
+R23 = -cos(LAN)*sin(i); 
 
-R31 = sin(w)*sin(i); 
-R32 = cos(w)*sin(i); 
+R31 = sin(omega)*sin(i); 
+R32 = cos(omega)*sin(i); 
 R33 = cos(i); 
 
 R = [R11 R12 R13; R21 R22 R23; R31 R32 R33]; 

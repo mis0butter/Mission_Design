@@ -13,9 +13,11 @@ function dX = EOM(et, X)
 
 % global const 
 % sun mu (m^3/s^2)
-mu_sun_m = 1.32712440018e20; 
-mu_sun_km = mu_sun_m / (1000^3); 
-mu = mu_sun_km; 
+% mu_sun_m = 1.32712440018e20; 
+% mu_sun_km = mu_sun_m / (1000^3); 
+mu_E_m3 = 3.986004418e14;  % m^3/s^2
+mu_E_km3 = mu_E_m3 * ( 1e-3 )^3 ; 
+mu = mu_E_km3; 
 
 % force column vector. Check if X is numeric or symbolic 
 n = length(X); 
