@@ -43,28 +43,18 @@ lla = [];
 lla_1 = []; 
 for i = 1:length(rv)
     
-    lla(i,:) = ecef2lla(rv(i,1:3)); 
+%     lla(i,:) = ecef2lla(rv(i,1:3)); 
     lla_1(i,:) = ecef2lla_1(rv(i,:)', R_E, mu_E_km3); 
     lla_1(i, 1:2) = lla_1(i, 1:2) * 180/pi; 
     
 end 
 % fn.plot3_xyz(rv); 
 
-figure()
-    plot(lla(:,2), lla(:,1), 'b')
-    hold on; grid on; 
-    plot(lla(1,2), lla(1,1), 'bo')
-    plot(lla(end,2), lla(end,1), 'b^')
-    
-    plot(lla_1(:,2), lla_1(:,1), 'r')
-    plot(lla_1(1,2), lla_1(1,1), 'ro')
-    plot(lla_1(end,2), lla_1(end,1), 'r^')
-    
-    xlabel('longitude'); ylabel('latitude'); 
 
-%% problem 1i 
+%% problem 1.a.i plot 
 
-figure()
+fname = '1.a.i Non-Rotating Earth'; 
+figure('name', fname)
 lh = plot(lla_1(:, 2), lla_1(:, 1), 'r'); 
 hold on; grid on; 
 xl = xlim; yl = ylim; 
@@ -76,9 +66,9 @@ for i = 1:length(lla_1)
     cla 
     
     % my ecef2lla 
-    plot(lla_1(1,2), lla_1(1,1), 'ro'); 
-    plot(lla_1(1:i, 2), lla_1(1:i, 1), 'r'); 
-    lh = plot(lla_1(i, 2), lla_1(i, 1), 'r^'); 
+    plot(lla_1(1,2), lla_1(1,1), 'bo'); 
+    plot(lla_1(1:i, 2), lla_1(1:i, 1), 'b'); 
+    lh = plot(lla_1(i, 2), lla_1(i, 1), 'b^'); 
     
     title(sprintf( '%d / %d', i, length(lla_1) )); 
     pause(0.001) 
@@ -86,7 +76,7 @@ for i = 1:length(lla_1)
 end 
 % plot(lla_1(end,2), lla_1(end,1), 'r^')
 
-%% problem 1ii 
+%% problem 1.a.ii 
 
 
 % Axis 3 rotation matrix 
@@ -109,10 +99,11 @@ for i = 2:length(lla_1)
 
 end 
 
-%% 
+%% problem 1.a.ii plot 
 
-figure()
-plot(lla_rot(:, 2), lla_rot(:, 1), 'b'); 
+fname = '1.a.ii Rotating Earth'; 
+figure('name', fname)
+plot(lla_1(:, 2), lla_1(:, 1), 'b'); 
 hold on; grid on; 
 lh = plot(lla_rot(:, 2), lla_rot(:, 1), 'r'); 
 xl = xlim; yl = ylim; 
@@ -124,21 +115,210 @@ for i = 1:length(lla_rot)
     cla 
     
     % fixed Earth 
-    plot(lla_1(1,2), lla_1(1,1), 'ro'); 
-    plot(lla_1(1:i, 2), lla_1(1:i, 1), 'r'); 
-    lh = plot(lla_1(i, 2), lla_1(i, 1), 'r^'); 
+    plot(lla_1(1,2), lla_1(1,1), 'bo'); 
+    lh1 = plot(lla_1(1:i, 2), lla_1(1:i, 1), 'b'); 
+    plot(lla_1(i, 2), lla_1(i, 1), 'b^'); 
     
     % rotating Earth 
-    plot(lla_rot(1,2), lla_rot(1,1), 'bo'); 
-    plot(lla_rot(1:i, 2), lla_rot(1:i, 1), 'b'); 
-    lh = plot(lla_rot(i, 2), lla_rot(i, 1), 'b^'); 
+    plot(lla_rot(1,2), lla_rot(1,1), 'ro'); 
+    lh2 = plot(lla_rot(1:i, 2), lla_rot(1:i, 1), 'r'); 
+    lh = plot(lla_rot(i, 2), lla_rot(i, 1), 'r^'); 
     
-    legend('fixed E', 'rot E') 
+    legend([lh1 lh2], 'fixed E', 'rot E') 
     
     title(sprintf( '%d / %d', i, length(lla_rot) )); 
     pause(0.001) 
     
 end 
+
+%% problem 1.b.i 
+
+e0 = 0.00048;   
+i0 = (180 - 51.644) * pi/180;    % deg --> rad
+w0 = 30.4757 * pi/180;   % deg --> rad
+O0 = 0 * pi/180;         % deg --> rad
+M0 = 39.7178 * pi/180;   % deg --> rad (should be true anomaly) 
+
+% mean motion --> semimajor axis 
+n = 15.50094 / 86400 * (2*pi);   % rev/day --> rad/s 
+mu_E_m3 = 3.986004418e14;  % m^3/s^2
+mu_E_km3 = mu_E_m3 * ( 1e-3 )^3 ; 
+a0 = (mu_E_km3 / n^2)^(1/3); 
+
+R_E = 6378.1370;        % km 
+w_E = 7.292115e-5;      % rad/s 
+
+oe0 = [a0; e0; i0; w0; O0; M0]; 
+rv0 = rvOrb.orb2rv(oe0, mu_E_km3); 
+
+% set ode45 params 
+rel_tol = 1e-10;         % 1e-14 accurate; 1e-6 coarse 
+abs_tol = 1e-10; 
+options = odeset('reltol', rel_tol, 'abstol', abs_tol ); 
+
+% propagate orbit 
+[t, rv] = ode45(@fn.EOM, [0 : 15*60], rv0, options); 
+
+lla = []; 
+lla_1 = []; 
+for i = 1:length(rv)
+    
+%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+    lla_1(i,:) = ecef2lla_1(rv(i,:)', R_E, mu_E_km3); 
+    lla_1(i, 1:2) = lla_1(i, 1:2) * 180/pi; 
+    
+end 
+% fn.plot3_xyz(rv); 
+
+
+%% problem 1.b.i plot 
+
+fname = '1.b.i Non-Rotating Earth'; 
+figure('name', fname)
+lh = plot(lla_1(:, 2), lla_1(:, 1), 'r'); 
+hold on; grid on; 
+xl = xlim; yl = ylim; 
+
+delete(lh); 
+xlim(xl); ylim(yl); 
+for i = 1:length(lla_1)
+
+    cla 
+    
+    % my ecef2lla 
+    plot(lla_1(1,2), lla_1(1,1), 'bo'); 
+    plot(lla_1(1:i, 2), lla_1(1:i, 1), 'b'); 
+    lh = plot(lla_1(i, 2), lla_1(i, 1), 'b^'); 
+    
+    title(sprintf( '%d / %d', i, length(lla_1) )); 
+    pause(0.001) 
+    
+end 
+% plot(lla_1(end,2), lla_1(end,1), 'r^')
+
+
+%% problem 1.b.ii 
+
+
+% Axis 3 rotation matrix 
+theta0 = 0; 
+dt = t(2) - t(1); 
+
+lla_rot = lla_1(1,:); 
+rv_rot = rv(1,:); 
+for i = 2:length(lla_1)
+    
+    theta = -w_E * dt * (i-1) + theta0; 
+    C = [   cos(theta) -sin(theta)  0; 
+            sin(theta)  cos(theta)  0;
+            0           0           1   ];
+    rv_rot(i,:) = [C * rv(i,1:3)'; C * rv(i, 4:6)']; 
+        
+    lla_rot(i,:) = ecef2lla_1(rv_rot(i,:)', R_E, mu_E_km3); 
+    lla_rot(i, 1:2) = lla_rot(i, 1:2) * 180/pi; 
+
+
+end 
+
+%% problem 1.b.ii plot 
+
+fname = '1.b.ii Rotating Earth'; 
+figure('name', fname)
+plot(lla_1(:, 2), lla_1(:, 1), 'b'); 
+hold on; grid on; 
+lh = plot(lla_rot(:, 2), lla_rot(:, 1), 'r'); 
+xl = xlim; yl = ylim; 
+
+cla;  
+xlim(xl); ylim(yl); 
+for i = 1:length(lla_rot)
+
+    cla 
+    
+    % fixed Earth 
+    plot(lla_1(1,2), lla_1(1,1), 'bo'); 
+    lh1 = plot(lla_1(1:i, 2), lla_1(1:i, 1), 'b'); 
+    plot(lla_1(i, 2), lla_1(i, 1), 'b^'); 
+    
+    % rotating Earth 
+    plot(lla_rot(1,2), lla_rot(1,1), 'ro'); 
+    lh2 = plot(lla_rot(1:i, 2), lla_rot(1:i, 1), 'r'); 
+    lh = plot(lla_rot(i, 2), lla_rot(i, 1), 'r^'); 
+    
+    legend([lh1 lh2], 'fixed E', 'rot E') 
+    
+    title(sprintf( '%d / %d', i, length(lla_rot) )); 
+    pause(0.001) 
+    
+end 
+
+
+%% problem 1.c.i 
+
+
+% Constants
+mu = mu_E_km3;
+J2 = 1.082e-3;
+ws = 2*pi/365.2422/24/60/60;
+
+% O Precession Calcs
+sprintf('O precession:')
+Odot = -(3/2)*n*(R_E / a0)^2 * J2 * (1/(1-e0^2)^(1/2)) * cos(i0); % O precession
+
+
+% ISS OEs (from https://in-the-sky.org/spacecraft_elements.php?id=25544)  
+i0 = 51.644 * pi/180;    % deg --> rad
+
+oe0 = [a0; e0; i0; w0; O0; M0]; 
+rv0 = rvOrb.orb2rv(oe0, mu_E_km3); 
+
+% set ode45 params 
+rel_tol = 1e-10;         % 1e-14 accurate; 1e-6 coarse 
+abs_tol = 1e-10; 
+options = odeset('reltol', rel_tol, 'abstol', abs_tol ); 
+
+% propagate orbit 
+[t, rv_J2] = ode45(@fn.EOM_J2, [0 : 86400], rv0, options); 
+
+lla = []; 
+lla_1 = []; 
+for i = 1:length(rv_J2)
+    
+%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+    lla_1(i,:) = ecef2lla_1(rv_J2(i,:)', R_E, mu_E_km3); 
+    lla_1(i, 1:2) = lla_1(i, 1:2) * 180/pi; 
+    
+end 
+% fn.plot3_xyz(rv); 
+
+
+
+%% problem 1.c.i plot 
+
+fname = '1.b.i Non-Rotating Earth'; 
+figure('name', fname)
+lh = plot(lla_1(:, 2), lla_1(:, 1), 'r'); 
+hold on; grid on; 
+xl = xlim; yl = ylim; 
+
+delete(lh); 
+xlim(xl); ylim(yl); 
+for i = 1:length(lla_1)
+
+    cla 
+    
+    % my ecef2lla 
+    plot(lla_1(1,2), lla_1(1,1), 'bo'); 
+    plot(lla_1(1:i, 2), lla_1(1:i, 1), 'b'); 
+    lh = plot(lla_1(i, 2), lla_1(i, 1), 'b^'); 
+    
+    title(sprintf( '%d / %d', i, length(lla_1) )); 
+    pause(0.001) 
+    
+end 
+% plot(lla_1(end,2), lla_1(end,1), 'r^')
+
+
 
 
 %% subfunctions 
