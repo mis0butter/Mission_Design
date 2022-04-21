@@ -350,6 +350,42 @@ pred = lla_rot_c2(end,2) - lla_rot_c2(1,2);
 
 
 
+%% PROBLEM 3 - MARS!! 
+
+clc 
+
+mu_M_km3 = 0.042828e6; 
+
+a0 = 3897; 
+i0 = 60 * pi/180; 
+e0 = 0.0063414; 
+w0 = 270 * pi/180; 
+O0 = 0; 
+M0 = 0; 
+
+oe0 = [a0; e0; i0; w0; O0; M0]; 
+rv0 = rvOrb.orb2rv(oe0, mu_M_km3); 
+
+
+% set ode45 params 
+rel_tol = 1e-10;         % 1e-14 accurate; 1e-6 coarse 
+abs_tol = 1e-10; 
+options = odeset('reltol', rel_tol, 'abstol', abs_tol ); 
+
+test = [3983.88414289582
+          52.4285652190091
+        -0.943967564657958
+        0.0696070532710085
+          1.63206285335835
+          3.08662446538281] ; 
+
+% propagate orbit 
+T = 2*pi*sqrt(a0^3/mu_M_km3); 
+[t, rv_M] = ode45(@fn.EOM_Mars_J2_J3, [0 : 0.01 : T*10], test, options); 
+
+figure()
+fn.plot3_xyz(rv_M); 
+
 
 %% subfunctions 
 

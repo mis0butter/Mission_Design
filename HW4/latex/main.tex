@@ -130,6 +130,7 @@ Then calculate the rate of secular variation for the ascending node due to J2:
 % Odot = -3/2 * n * J2 * ( R_E / norm(rv0(1:3)) )^2 * 1/( 1-e0^2 )^2 * cos(i0); 
 \begin{equation}
 	\dot{\Omega} = - \frac{3}{2} \bar{n} J_2 \big( \frac{a_e}{ \bar{a} } \big) ^2 \frac{1}{(1-\bar{e}^2)^2} cos \bar{I}
+	\label{eq:Odot}
 \end{equation}
 
 $\bar{a}$, $\bar{e}$, and $\bar{I}$ can be taken from the initial ISS orbit parameters, and $\bar{n}$ is the mean motion of the orbit: 
@@ -143,6 +144,7 @@ Finally, the change in lambda was calculated as:
 
 \begin{equation}
 	\Delta \lambda = -(w_E - \dot{\Omega}) T_d 
+	\label{eq:dlambda}
 \end{equation}
 
 where $w_E$ is the rotation rate of the Earth. $\Delta \lambda$ came out to \textbf{-22.870$^\circ$}. 
@@ -155,14 +157,86 @@ The calculated change in drift of the ascending node was taken from the differen
 % ================================================================ % 
 \section*{Problem 2: Orbit Design}
 
-For a sun-synchronous orbit, the $\Omega$ nodal rate needs to match the average rate of the Sun's motion projected onto the Earth's equator: 
+% In orbital mechanics, a frozen orbit is an orbit for an artificial satellite in which natural drifting due to the central body's shape has been minimized by careful selection of the orbital parameters.[clarification needed] Typically, this is an orbit in which, over a long period of time, the satellite's altitude remains constant at the same point in each orbit.[1] Changes in the inclination, position of the lowest point of the orbit, and eccentricity have been minimized by choosing initial values so that their perturbations cancel out.[2], which results in a long-term stable orbit that minimizes the use of station-keeping propellant.
+
+Continuing from Equation \ref{eq:dlambda}, after $m$ revolutions, 
+
+\begin{equation}
+	m \Delta \lambda = -(w_E - \dot{\Omega}) T_d m 
+\end{equation}
+
+A condition for ground track repeat is that $m \Delta \lambda $ needs to be a multiple (let's say $k$) of $2 \pi$, or 
+
+\begin{equation}
+	k = \frac{m \Delta \lambda}{2 \pi} = \frac{m ( w_E - \dot{\bar{\Omega}} ) T_d}{ 2 \pi } = m \frac{T_d}{D_n}
+\end{equation}
+
+For a ground track repeat orbit, the conditions for which the sub-satellite point repeatedly passes a geographical location ($\phi$, $\lambda$) at regular intervals are given by: 
+
+\begin{equation}
+	(\omega_e - \dot{\bar{\Omega}}) D_n = k 2 \pi 
+\end{equation}
+
+\begin{equation}
+	( \dot{\bar{\omega}} + \dot{\bar{M}} ) T_d = m 2 \pi 
+\end{equation}
+
+As for frozen orbits, the largest perturbation on gravitational acceleration is due to J2, which is on the order of 10$^{-3}$. The next-largest perturbation is J3, which is on the order of 10$^-6$. Equation \ref{eq:Odot} gives the scalar secular variation on $\dot{\bar{\Omega}}$ due to J2 which grows indefinitely. Equations \ref{eq:wdot} and \ref{eq:Mdot} give the secular variations due to J2 for $\dot{\bar{\omega}}$ and $\dot{\bar{M}}$: 
+
+\begin{equation}
+	\dot{\bar{\omega}} = - \frac{3}{4} \bar{n} J_2 \big( \frac{a_e}{\bar{a}} \big)^2 \frac{1}{( 1 - \bar{e}^2 )^2} (1 - 5 cos^2 \bar{I})
+	\label{eq:wdot}
+\end{equation}
+
+\begin{equation}
+	\dot{\bar{M}} = \bar{n} \Bigg[ 1 - \frac{3}{4} \big( \frac{a_e}{\bar{a}} \big)^2 J_2 \frac{1}{( 1 - \bar{e}^2 )^{\frac{3}{2}}} (1 - 3 cos^2 \bar{I}) \Bigg]
+	\label{eq:Mdot}
+\end{equation}
+
+J2 also leads to a short-period perturbation on all elements, but only semi-major axis is of interest: 
+
+\begin{equation}
+	\Delta a _{SP} (t) = \bar{a} J_2 \big( \frac{a_e}{\bar{a}} \big)^2 \Bigg[ \Big( 1 - \frac{3}{2} sin^2 \bar{I} \Big) \Big( ( \frac{\bar{a}}{r} )^3 - \frac{1}{( 1 - \bar{e}^2 )^{\frac{3}{2}}} \Big) + \frac{3}{2} \big( \frac{\bar{a}}{r} \big)^3 sin^2 \bar{I} cos 2 (\bar{w} + \bar{f}) \Bigg]
+\end{equation}
+
+J3 exerts a long-period perturbation on all elements other than the semi-major axis, but only the eccentricity and perigee are of interest: 
+
+\begin{equation}
+	\Delta e_{LP}(t) = - \frac{1}{2} \frac{J_3}{J_2} \frac{a_e}{\bar{a}} sin \bar{I} sin \bar{w} (t) 
+	\label{eq:Delta_e_LP}
+\end{equation}
+
+\begin{equation}
+	\bar{e} \Delta \omega _{LP} (t) = - \frac{1}{2} \frac{J_3}{J_2} \frac{a_e}{\bar{a}} \frac{1}{( 1 - \bar{e}^2 )} sin \bar{I} \; cos \bar{w} (t) 
+	\label{eq:Delta_w_LP}
+\end{equation}
+
+For frozen orbits, the average variation rates of $e$ and $w$ are set to 0. Thus, the mean argument of perigee should be around 90 $^\circ$. 
+
+\begin{equation}
+	w = 90 ^\circ
+\end{equation}
+
+An orbit is sun-synchronous when the precession rate equals the mean motion of the Earth around the Sun. the $\Omega$ nodal rate needs to match the average rate of the Sun's motion projected onto the Earth's equator: 
 
 \begin{equation}
 	\frac{d \Omega}{dt} = \dot{\bar{\Omega}} = \frac{360 ^\circ}{365.242 \; days/year} = 0.9856 \; ^\circ / day 
 \label{eq:SSO_dOmega}
 \end{equation}
 
+The angular precession for an Earth orbiting satellite is given by Equation \ref{eq:Odot}. One can reform Equation \ref{eq:Odot} as a formula for inclination: 
 
+\begin{equation}
+	\bar{I} = cos^{-1} \Bigg[ -\frac{2}{3} \frac{d \Omega}{dt} \frac{1}{J_2 \bar{n}} \Big( \frac{\bar{a}(1 - \bar{e}^2)}{R_E} \Big)^2 \Bigg]
+\end{equation}
+
+The process for determining the mean elements $\bar{a}$, $\bar{e}$, and $\bar{I}$ involves making initial guesses and then minimizing the misclosure rate through an optimization routine: 
+
+\begin{equation}
+	\epsilon = m(w_E - \dot{\bar{\Omega}}) - k(\dot{\bar{\omega}} - \dot{\bar{M}})
+\end{equation}
+
+Initial computed states for position and velocity will be integrated and iterated until a sun-synchronous, frozen, and repeated ground track orbit is found. 
 
 
 % ------------------------- % 
@@ -174,33 +248,37 @@ For a sun-synchronous orbit, the $\Omega$ nodal rate needs to match the average 
 
 \section*{Problem 3}
 
-% ------------------------- % 
-\subsection*{A}
+The calculations for this section were taken from the paper \textbf{Five Special Types of Orbits Around Mars} (2010 Liu, Baoyin, and Ma). A frozen orbit is possible on Mars. Mars' J2 = 1.95545e-3 and J3 = 3.14498e-5. In comparison, the Earth J2 = 1.08263e-3 and J3 = -2.53266e-6. The same positive sign between J2 and J3 must be accounted for to prevent the desired eccentricity from becoming negative. For Earth, $\omega$ is set to 90 $^\circ$. For Mars, $\omega$ must be set to around 270 $^\circ$. 
 
+The average variation rate of $e$ from Equation \ref{eq:Delta_e_LP} is given by: 
 
+\begin{equation}
+	\dot{\bar{e}} = \frac{3 \bar{n J_3 R_p^3 sin \bar{I}}}{ 4 a^3 ( 1 - e^2 )^2 } \Big( \frac{5}{2} sin^2\bar{I} - 2 \Big) cos \omega
+\end{equation}
 
-% ------------------------- % 
-\subsection*{B}
+And from Equation \ref{eq:Delta_w_LP}, the average variation rate of $\omega$ is given by: 
 
+\begin{equation}
+	\dot{\bar{\omega}} = \frac{3 \bar{n} J_2 R_p^2}{2 a^2 (1-e^2)^2} \Bigg[ \Big( 2 - \frac{5}{2} sin^2 \bar{I} \Big) \Big( 1 + \frac{J_3 R_p}{2 J_2 a(1-e^2)} \big( \frac{sin^2 \bar{I} - \bar{e}^2 cos^2 \bar{I}}{sin \bar{I}} \big) \frac{sin \omega}{\bar{e}} \Big) + \frac{3 J_2 R_p^2}{2 \bar{a}^2 ( 1 - e^2 )^2} D \Bigg]
+\end{equation}
 
-% ------------------------- % 
-\subsection*{C}
+where 
 
+\begin{equation}
+	D = (4 + \frac{7}{12} \bar{e}^2 + 2 \sqrt{1 - e^2} ) - sin^2 \bar{I}( \frac{103}{102} + \frac{3}{8} \bar{e}^2 + \frac{11}{2} \sqrt{1 - \bar{e}^2} ) + sin^4 \bar{I}(\frac{215}{418} - \frac{15}{32} \bar{e}^2 + \frac{15}{4} \sqrt{1 - \bar{e}^2} ) + ... H.O.T. 
+\end{equation}
 
+H.O.T. stands for higher order terms than J3. As stated in Problem 2, for frozen orbits, the average variation rates of $e$ and $\omega$ are set to 0. 
 
-% ================================================================ % 
-% Problem 4 
+Solving the above equations yields the following for $e$ and $\omega$: 
 
-\section*{Problem 4}
+\begin{equation}
+	e = \frac{ \frac{J_3 R_p}{ 2 J_2 \bar{a} } sin \bar{I} sin{\omega} }{ 1 - \frac{ 3 J_2 R_p^2 E }{ \bar{a}^2 ( 5 sin^2 \bar{I} - 4 ) } }
+\end{equation}
 
-% ------------------------- % 
-\subsection*{A}
-
-
-
-% ------------------------- % 
-\subsection*{B}
-
+\begin{equation}
+	\omega = 270 ^\circ
+\end{equation}
 
 % \newpage
 % ================================================================ % 
