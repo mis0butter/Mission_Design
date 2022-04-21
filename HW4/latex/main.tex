@@ -11,6 +11,7 @@
 \usepackage{float}
 \usepackage{listings}
 \usepackage{pdfpages}
+\usepackage{url}
 \usepackage{color} %red, green, blue, yellow, cyan, magenta, black, white
 \definecolor{mygreen}{RGB}{28,172,0} % color values Red, Green, Blue
 \definecolor{mylilas}{RGB}{170,55,241}
@@ -58,13 +59,95 @@
 % ------------------------- % 
 \subsection*{A}
 
+The following parameters were used to initialize the ISS orbit, which were taken from \url{https://in-the-sky.org/spacecraft_elements.php?id=25544} on April 19: 
+
+% e0 = 0.00049; 
+% i0 = 51.6427 * pi/180; 
+% w0 = 40.1116 * pi/180; 
+% O0 = 0; 
+% M0 = 70.88 * pi/180; 
+\begin{itemize}
+	\item $a$ = 6794.588 km 
+	\item $e$ = 0.00049 
+	\item $i$ = 51.627 deg 
+	\item $\omega$ = 40.1116 deg 
+	\item $\Omega$ = 0 deg 
+	\item $M$ = 70.88 
+\end{itemize}
+
+The right ascension of the ascending node, $\Omega$, was set to 0 as stated in the problem statement. 
+
+% % ISS OEs (from https://in-the-sky.org/spacecraft_elements.php?id=25544)  
+
+% Rotating and fixed earth plot 
+\begin{figure}[H]
+	\centering 
+	\includegraphics*[width=0.7\textwidth]{1.a Rotating and Non-Rotating Earth.pdf}
+	\label{fig:1.a}
+\end{figure}
+
 
 % ------------------------- % 
 \subsection*{B}
 
+% Rotating and fixed earth plot 
+\begin{figure}[H]
+	\centering 
+	\includegraphics*[width=0.7\textwidth]{1.b Rotating and Non-Rotating Earth.pdf}
+	\label{fig:1.a}
+\end{figure}
+
 
 % ------------------------- % 
 \subsection*{C}
+
+% Rotating and fixed earth plot 
+\begin{figure}[H]
+	\centering 
+	\includegraphics*[width=0.7\textwidth]{1.c Fixed and Rotating Earth with Secular Precession Prograde.pdf}
+	\label{fig:1.a}
+\end{figure}
+
+To derive a formula for predicting the westward drift, first calculate the Draconitic period: 
+
+% Td = 2*pi / (wdot + Mdot); 
+% Dn = 2*pi / ( w_E - Odot ); 
+
+% u0 = w0 + M0; 
+
+% u = u0 + udot * T + 2*pi/udot; 
+
+% dlambda = (-w_E - Odot) * Td * 180/pi; 
+
+% pred = lla_rot_c2(end,2) - lla_rot_c2(1,2); 
+
+\begin{equation}
+	T_d = \frac{2 \pi}{\dot{\omega} + \dot{M}}
+\end{equation}
+
+Then calculate the rate of secular variation for the ascending node due to J2: 
+
+% Odot = -3/2 * n * J2 * ( R_E / norm(rv0(1:3)) )^2 * 1/( 1-e0^2 )^2 * cos(i0); 
+\begin{equation}
+	\dot{\Omega} = - \frac{3}{2} \bar{n} J_2 \big( \frac{a_e}{ \bar{a} } \big) ^2 \frac{1}{(1-\bar{e}^2)^2} cos \bar{I}
+\end{equation}
+
+$\bar{a}$, $\bar{e}$, and $\bar{I}$ can be taken from the initial ISS orbit parameters, and $\bar{n}$ is the mean motion of the orbit: 
+
+% sqrt(mu_E_km3/a0^3)
+\begin{equation}
+	\bar{n} = \sqrt{\frac{\mu}{\bar{a}^3}}
+\end{equation}
+
+Finally, the change in lambda was calculated as: 
+
+\begin{equation}
+	\Delta \lambda = -(w_E - \dot{\Omega}) T_d 
+\end{equation}
+
+where $w_E$ is the rotation rate of the Earth. $\Delta \lambda$ came out to \textbf{-22.870$^\circ$}. 
+
+The calculated change in drift of the ascending node was taken from the difference between the initial longitude and the final longitude after one revolution, which came out to be \textbf{-22.790$^\circ$}. The calculated drift was within 0.1$^\circ$ of the analytical prediction.  
 
 
 

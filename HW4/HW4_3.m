@@ -2,6 +2,21 @@
 
 % 0 = no plot. 1 = plot animation. 2 = plot all at once 
 plot_option = 2; 
+ 
+% Earth 
+Earth.a0 =      1.00000261; 
+Earth.da =      0.00000562; 
+Earth.e0 =      0.01671123; 
+Earth.de =     -0.00004392; 
+Earth.I0 =     -0.00001531; 
+Earth.dI =     -0.01294668;
+Earth.L0 =    100.46457166; 
+Earth.dL =  35999.37244981; 
+Earth.wbar0 = 102.93768193; 
+Earth.dwbar =   0.32327364;
+Earth.Omega0 =  0; 
+Earth.dOmega =  0; 
+
 
 %% Problem 1 
 
@@ -17,13 +32,20 @@ plot_option = 2;
 % t = 0, ascending node and Greenwich Meridian coincident 
 
 % ISS OEs (from https://in-the-sky.org/spacecraft_elements.php?id=25544)  
-e0 = 0.00048;   
-i0 = 51.644 * pi/180;    % deg --> rad
-w0 = 30.4757 * pi/180;   % deg --> rad
-O0 = 0 * pi/180;         % deg --> rad
-M0 = 39.7178 * pi/180;   % deg --> rad (should be true anomaly) 
+% e0 = 0.00048;   
+% i0 = 51.644 * pi/180;    % deg --> rad
+% w0 = 30.4757 * pi/180;   % deg --> rad
+% w0 = 0; 
+% O0 = 0 * pi/180;         % deg --> rad
+% M0 = 39.7178 * pi/180;   % deg --> rad (should be true anomaly) 
 % M0 = (2*pi - w0);        % rad (should be true anomaly) 
-% M0 = 0 * pi/180;         % deg --> rad  
+% M0 = 0; 
+
+e0 = 0.00049; 
+i0 = 51.6427 * pi/180; 
+w0 = 40.1116 * pi/180; 
+O0 = 0; 
+M0 = 70.88 * pi/180; 
 
 % mean motion --> semimajor axis 
 n = 15.50094 / 86400 * (2*pi);   % rev/day --> rad/s 
@@ -44,16 +66,6 @@ options = odeset('reltol', rel_tol, 'abstol', abs_tol );
 
 % propagate orbit 
 [t, rv_a] = ode45(@fn.EOM, [0 : 15*60], rv0, options); 
-
-Teph = 2451545.0; 
-planet = Earth; 
-[r_ecl, r_p, oe] = fn.xyz_ecl(Teph, planet)
-% ------------------------------------------------------------------------
-% Teph  = ephemeris time (days) 
-% r_ecl = J2000 ecliptic plane coordinates 
-% ------------------------------------------------------------------------
-
-
 
 
 % ------------------------------------------------------------------------
@@ -82,6 +94,7 @@ end
 fname = '1.a Rotating and Non-Rotating Earth'; 
 plot_option = 2; 
 plot_gt(plot_option, fname, lla_1_a, lla_rot_a)
+fn.savePDF(gcf)
 
 
 %% problem 1.b
@@ -116,7 +129,7 @@ lla = [];
 lla_1_b = []; 
 for i = 1:length(rv_b)
     
-%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+%     lla_1_b(i,:) = ecef2lla(rv(i,1:3)); 
     lla_1_b(i,:) = ecef2lla_1(rv_b(i,:)', R_E, mu_E_km3); 
     lla_1_b(i, 1:2) = lla_1_b(i, 1:2) * 180/pi; 
     
@@ -136,16 +149,16 @@ end
 fname = '1.b Rotating and Non-Rotating Earth'; 
 plot_option = 2; 
 plot_gt(plot_option, fname, lla_1_b, lla_rot_b)
+fn.savePDF(gcf)
 
 
+%% problem 1.c.i 
 
-%% problem 1.c
-
+% PROGRADE 
 
 % Constants
 mu = mu_E_km3;
 J2 = 1.082e-3;
-ws = 2*pi/365.2422/24/60/60;
 
 % O Precession Calcs
 Odot = -(3/2)*n*(R_E / a0)^2 * J2 * (1/(1-e0^2)^(1/2)) * cos(i0); % O precession
@@ -153,6 +166,7 @@ sprintf('Odot precession: %.3f', Odot)
 
 % ISS OEs (from https://in-the-sky.org/spacecraft_elements.php?id=25544)  
 i0 = 51.644 * pi/180;    % deg --> rad
+% M0 = 0; 
 
 oe0 = [a0; e0; i0; w0; O0; M0]; 
 rv0 = rvOrb.orb2rv(oe0, mu_E_km3); 
@@ -165,6 +179,10 @@ options = odeset('reltol', rel_tol, 'abstol', abs_tol );
 % propagate orbit 
 T = 2*pi*sqrt(a0^3/mu_E_km3); 
 [t, rv_c] = ode45(@fn.EOM_J2, [0 : T], rv0, options); 
+
+% final oe 
+oef = rvOrb.rv2orb(rv_c(end,:), mu_E_km3); 
+Odot = oe0(5) - oef(5); 
 
 lla = []; 
 lla_1_c = []; 
@@ -186,18 +204,150 @@ end
 % ------------------------------------------------------------------------
 % PLOT
 
-fname = '1.c Rotating and Non-Rotating Earth'; 
+fname = '1.c Fixed and Rotating Earth with Secular Precession Prograde'; 
 plot_option = 2; 
 plot_gt(plot_option, fname, lla_1_c, lla_rot_c)
+fn.savePDF(gcf)
 
-%% ------------------------------------------------------------------------
-% Precession matches up? 
-oe_a = rvOrb.rv2orb(rv_a(end,:), mu_E_km3); 
-oe_c = rvOrb.rv2orb(rv_c(end,:), mu_E_km3); 
-% oe_d = rvOrb.rv2orb(rv_c(901,:), mu_E_km3); 
+% ------------------------------------------------------------------------
+% RETROGRADE 
 
-O_a = oe_a(5); 
-O_c = oe_c(5); 
+% Constants
+mu = mu_E_km3;
+J2 = 1.082e-3;
+
+% O Precession Calcs
+Odot = -(3/2)*n*(R_E / a0)^2 * J2 * (1/(1-e0^2)^(1/2)) * cos(i0); % O precession
+sprintf('Odot precession: %.3f', Odot)
+
+% ISS OEs (from https://in-the-sky.org/spacecraft_elements.php?id=25544)  
+i0 = (180 - 51.644) * pi/180;    % deg --> rad
+
+oe0 = [a0; e0; i0; w0; O0; M0]; 
+rv0 = rvOrb.orb2rv(oe0, mu_E_km3); 
+
+% set ode45 params 
+rel_tol = 1e-10;         % 1e-14 accurate; 1e-6 coarse 
+abs_tol = 1e-10; 
+options = odeset('reltol', rel_tol, 'abstol', abs_tol ); 
+
+% propagate orbit 
+T = 2*pi*sqrt(a0^3/mu_E_km3); 
+[t, rv_c] = ode45(@fn.EOM_J2, [0 : T], rv0, options); 
+
+% final oe 
+oef = rvOrb.rv2orb(rv_c(end,:), mu_E_km3); 
+Odot = oe0(5) - oef(5); 
+
+lla = []; 
+lla_1_c = []; 
+for i = 1:length(rv_c)
+    
+%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+    lla_1_c(i,:) = ecef2lla_1(rv_c(i,:)', R_E, mu_E_km3); 
+    lla_1_c(i, 1:2) = lla_1_c(i, 1:2) * 180/pi; 
+    
+end 
+% fn.plot3_xyz(rv); 
+
+
+% ------------------------------------------------------------------------
+% Axis 3 rotation matrix 
+[lla_rot_c, rv_rot_c] = lla_rv_rot(t, rv_c, w_E, R_E, mu_E_km3); 
+
+
+% ------------------------------------------------------------------------
+% PLOT
+
+fname = '1.c Fixed and Rotating Earth with Secular Precession Retrograde '; 
+plot_option = 2; 
+plot_gt(plot_option, fname, lla_1_c, lla_rot_c)
+fn.savePDF(gcf)
+
+%% Problem 1.c.ii 
+
+oe_c0 = rvOrb.rv2orb(rv0, mu_E_km3); 
+dt = 1; 
+
+Odot = -3/2 * n * J2 * ( R_E / norm(rv0(1:3)) )^2 * 1/( 1-e0^2 )^2 * cos(i0); 
+wdot = -3/4 * n * (R_E / norm(rv0(1:3)))^2 * J2 * (1 - 5*cosd(i0)^2) / (1-e0^2)^2;
+Mdot = n * (1-3/4*(R_E / norm(rv0(1:3)))^2 * J2 * (1 - 3*cosd(i0)^2) / (1-e0^2)^(3/2));
+
+oe_c = oe_c0; 
+rv_c2 = rv0'; 
+for i = 1 : T
+    
+    oe = oe_c0; 
+    
+    % augment mean anomaly 
+    M0 = oe_c0(6); 
+    M = M0 + Mdot * (dt*i); 
+    M = mod(M, 2*pi); 
+    oe(6) = M; 
+    
+    % augment RAAN 
+    O0 = oe_c0(5); 
+    O = O0 + Odot * (dt*i); 
+    O = mod(O, 2*pi); 
+    oe(5) = O; 
+    
+    % augment perigee 
+    w0 = oe_c0(4); 
+    w = w0 + wdot * (dt*i); 
+    w = mod(w, 2*pi); 
+    oe(4) = w; 
+    
+    oe_c(i+1,:) = oe; 
+    rv_c2(i+1,:) = rvOrb.orb2rv(oe, mu_E_km3); 
+    
+end 
+
+lla = []; 
+lla_1_c2 = []; 
+for i = 1:length(rv_c2)
+    
+%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+    lla_1_c2(i,:) = ecef2lla_1(rv_c2(i,:)', R_E, mu_E_km3); 
+    lla_1_c2(i, 1:2) = lla_1_c2(i, 1:2) * 180/pi; 
+    
+end 
+
+
+
+% ------------------------------------------------------------------------
+% Axis 3 rotation matrix 
+[lla_rot_c2, rv_rot_c2] = lla_rv_rot(t, rv_c2, w_E, R_E, mu_E_km3); 
+    
+for i = 1:length(rv_rot_c2)
+%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+    lla_rot_c2(i,:) = ecef2lla_1(rv_rot_c2(i,:)', R_E, mu_E_km3); 
+    lla_rot_c2(i, 1:2) = lla_rot_c2(i, 1:2) * 180/pi; 
+    
+end 
+
+% fn.plot3_xyz(rv); 
+% ------------------------------------------------------------------------
+% PLOT
+
+fname = '1.c Fixed and Rotating Earth with Secular Precession'; 
+plot_option = 2; 
+plot_gt(plot_option, fname, lla_1_c2, lla_rot_c2)
+fn.savePDF(gcf)
+
+%% Problem 1.c.ii check westward drift of ascending crossing of ground track 
+
+Td = 2*pi / (wdot + Mdot); 
+Dn = 2*pi / ( w_E - Odot ); 
+
+u0 = w0 + M0; 
+
+u = u0 + udot * T + 2*pi/udot; 
+
+dlambda = -(w_E - Odot) * Td * 180/pi; 
+
+pred = lla_rot_c2(end,2) - lla_rot_c2(1,2); 
+% pred = pred / T; 
+
 
 
 
@@ -255,7 +405,7 @@ if plot_option == 1
         lh2 = plot(lla_rot(1:i, 2), lla_rot(1:i, 1), 'r'); 
         lh = plot(lla_rot(i, 2), lla_rot(i, 1), 'r^'); 
 
-        legend([lh1 lh2], 'fixed E', 'rot E') 
+        legend([lh1 lh2], 'fixed E', 'rot E', 'location', 'best') 
 
         title(sprintf( '%d / %d', i, length(lla_rot) )); 
         pause(0.001) 
@@ -263,6 +413,8 @@ if plot_option == 1
     end 
     
     title(fname) 
+    xlabel('Longitude (deg)'); 
+    ylabel('Latitude (deg)');
 
 elseif plot_option == 2
 
@@ -279,9 +431,11 @@ elseif plot_option == 2
     lh2 = plot(lla_rot(:, 2), lla_rot(:, 1), 'r'); 
     lh = plot(lla_rot(end, 2), lla_rot(end, 1), 'r^'); 
 
-    legend([lh1 lh2], 'fixed E', 'rot E') 
+    legend([lh1 lh2], 'fixed E', 'rot E', 'location', 'best') 
 
     title(fname) 
+    xlabel('Longitude (deg)'); 
+    ylabel('Latitude (deg)');
     
 end 
 

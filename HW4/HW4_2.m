@@ -35,10 +35,10 @@ Earth.dOmega =  0;
 e0 = 0.00048;   
 i0 = 51.644 * pi/180;    % deg --> rad
 w0 = 30.4757 * pi/180;   % deg --> rad
+% w0 = 0; 
 O0 = 0 * pi/180;         % deg --> rad
-M0 = 39.7178 * pi/180;   % deg --> rad (should be true anomaly) 
-% M0 = (2*pi - w0);        % rad (should be true anomaly) 
-% M0 = 0 * pi/180;         % deg --> rad  
+% M0 = 39.7178 * pi/180;   % deg --> rad (should be true anomaly) 
+M0 = (2*pi - w0);        % rad (should be true anomaly) 
 
 % mean motion --> semimajor axis 
 n = 15.50094 / 86400 * (2*pi);   % rev/day --> rad/s 
@@ -146,11 +146,11 @@ plot_gt(plot_option, fname, lla_1_b, lla_rot_b)
 
 %% problem 1.c.i 
 
+% PROGRADE 
 
 % Constants
 mu = mu_E_km3;
 J2 = 1.082e-3;
-ws = 2*pi/365.2422/24/60/60;
 
 % O Precession Calcs
 Odot = -(3/2)*n*(R_E / a0)^2 * J2 * (1/(1-e0^2)^(1/2)) * cos(i0); % O precession
@@ -158,6 +158,7 @@ sprintf('Odot precession: %.3f', Odot)
 
 % ISS OEs (from https://in-the-sky.org/spacecraft_elements.php?id=25544)  
 i0 = 51.644 * pi/180;    % deg --> rad
+M0 = 0; 
 
 oe0 = [a0; e0; i0; w0; O0; M0]; 
 rv0 = rvOrb.orb2rv(oe0, mu_E_km3); 
@@ -173,7 +174,7 @@ T = 2*pi*sqrt(a0^3/mu_E_km3);
 
 % final oe 
 oef = rvOrb.rv2orb(rv_c(end,:), mu_E_km3); 
-dO = oe0(5) - oef(5); 
+Odot = oe0(5) - oef(5); 
 
 lla = []; 
 lla_1_c = []; 
@@ -195,20 +196,134 @@ end
 % ------------------------------------------------------------------------
 % PLOT
 
-fname = '1.c Fixed and Rotating Earth with Secular Precession'; 
+fname = '1.c Fixed and Rotating Earth with Secular Precession Prograde'; 
+plot_option = 2; 
+plot_gt(plot_option, fname, lla_1_c, lla_rot_c)
+
+% ------------------------------------------------------------------------
+% RETROGRADE 
+
+% Constants
+mu = mu_E_km3;
+J2 = 1.082e-3;
+
+% O Precession Calcs
+Odot = -(3/2)*n*(R_E / a0)^2 * J2 * (1/(1-e0^2)^(1/2)) * cos(i0); % O precession
+sprintf('Odot precession: %.3f', Odot)
+
+% ISS OEs (from https://in-the-sky.org/spacecraft_elements.php?id=25544)  
+i0 = (180 - 51.644) * pi/180;    % deg --> rad
+
+oe0 = [a0; e0; i0; w0; O0; M0]; 
+rv0 = rvOrb.orb2rv(oe0, mu_E_km3); 
+
+% set ode45 params 
+rel_tol = 1e-10;         % 1e-14 accurate; 1e-6 coarse 
+abs_tol = 1e-10; 
+options = odeset('reltol', rel_tol, 'abstol', abs_tol ); 
+
+% propagate orbit 
+T = 2*pi*sqrt(a0^3/mu_E_km3); 
+[t, rv_c] = ode45(@fn.EOM_J2, [0 : T], rv0, options); 
+
+% final oe 
+oef = rvOrb.rv2orb(rv_c(end,:), mu_E_km3); 
+Odot = oe0(5) - oef(5); 
+
+lla = []; 
+lla_1_c = []; 
+for i = 1:length(rv_c)
+    
+%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+    lla_1_c(i,:) = ecef2lla_1(rv_c(i,:)', R_E, mu_E_km3); 
+    lla_1_c(i, 1:2) = lla_1_c(i, 1:2) * 180/pi; 
+    
+end 
+% fn.plot3_xyz(rv); 
+
+
+% ------------------------------------------------------------------------
+% Axis 3 rotation matrix 
+[lla_rot_c, rv_rot_c] = lla_rv_rot(t, rv_c, w_E, R_E, mu_E_km3); 
+
+
+% ------------------------------------------------------------------------
+% PLOT
+
+fname = '1.c Fixed and Rotating Earth with Secular Precession Retrograde '; 
 plot_option = 2; 
 plot_gt(plot_option, fname, lla_1_c, lla_rot_c)
 
 
-%% ------------------------------------------------------------------------
+%% problem 1.c.ii
+
+% Constants
+mu = mu_E_km3;
+J2 = 1.082e-3;
+
+% O Precession Calcs
+Odot = -(3/2)*n*(R_E / a0)^2 * J2 * (1/(1-e0^2)^(1/2)) * cos(i0); % O precession
+sprintf('Odot precession: %.3f', Odot)
+
+% ISS OEs (from https://in-the-sky.org/spacecraft_elements.php?id=25544)  
+i0 = 51.644 * pi/180;    % deg --> rad
+
+oe0 = [a0; e0; i0; w0; O0; M0]; 
+rv0 = rvOrb.orb2rv(oe0, mu_E_km3); 
+
+% set ode45 params 
+rel_tol = 1e-10;         % 1e-14 accurate; 1e-6 coarse 
+abs_tol = 1e-10; 
+options = odeset('reltol', rel_tol, 'abstol', abs_tol ); 
+
+% propagate orbit 
+T = 2*pi*sqrt(a0^3/mu_E_km3); 
+[t, rv_c] = ode45(@fn.EOM_J2, [0 : T], rv0, options); 
+
+lla = []; 
+lla_1_c = []; 
+for i = 1:length(rv_c)
+    
+%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+    lla_1_c(i,:) = ecef2lla_1(rv_c(i,:)', R_E, mu_E_km3); 
+    lla_1_c(i, 1:2) = lla_1_c(i, 1:2) * 180/pi; 
+    
+end 
+% fn.plot3_xyz(rv); 
+
+
+% ------------------------------------------------------------------------
+% Axis 3 rotation matrix 
+[lla_rot_c, rv_rot_c] = lla_rv_rot(t, rv_c, w_E, R_E, mu_E_km3); 
+
+
+% ------------------------------------------------------------------------
+% PLOT
+
+fname = '1.c Rotating and Non-Rotating Earth'; 
+plot_option = 2; 
+plot_gt(plot_option, fname, lla_1_c, lla_rot_c)
+
+
+% ------------------------------------------------------------------------
 % Precession matches up? 
+oe_a = rvOrb.rv2orb(rv_a(end,:), mu_E_km3); 
+oe_c = rvOrb.rv2orb(rv_c(end,:), mu_E_km3); 
+% oe_d = rvOrb.rv2orb(rv_c(901,:), mu_E_km3); 
+
+O_a = oe_a(5); 
+O_c = oe_c(5); 
+
+
+
+%% Problem 1.c.ii another way  
 
 oe_c0 = rvOrb.rv2orb(rv0, mu_E_km3); 
 dt = 1; 
 
-dO = -3/2 * n * J2 * ( R_E / norm(rv0(1:3)) )^2 * 1/( 1-e0^2 )^2 * cos(i0); 
-dw = -3/4 * n * (R_E / norm(rv0(1:3)))^2 * J2 * (1 - 5*cosd(i0)^2) / (1-e0^2)^2;
-dM = n * (1-3/4*(R_E / norm(rv0(1:3)))^2 * J2 * (1 - 3*cosd(i0)^2) / (1-e0^2)^(3/2));
+Odot = -3/2 * n * J2 * ( R_E / norm(rv0(1:3)) )^2 * 1/( 1-e0^2 )^2 * cos(i0); 
+wdot = -3/4 * n * (R_E / norm(rv0(1:3)))^2 * J2 * (1 - 5*cosd(i0)^2) / (1-e0^2)^2;
+Mdot = n * (1-3/4*(R_E / norm(rv0(1:3)))^2 * J2 * (1 - 3*cosd(i0)^2) / (1-e0^2)^(3/2));
 
 oe_c = oe_c0; 
 rv_c2 = rv0'; 
@@ -218,19 +333,19 @@ for i = 1 : T
     
     % augment mean anomaly 
     M0 = oe_c0(6); 
-    M = M0 + dM * (dt*i); 
+    M = M0 + Mdot * (dt*i); 
     M = mod(M, 2*pi); 
     oe(6) = M; 
     
     % augment RAAN 
     O0 = oe_c0(5); 
-    O = O0 + dO * (dt*i); 
+    O = O0 + Odot * (dt*i); 
     O = mod(O, 2*pi); 
     oe(5) = O; 
     
     % augment perigee 
     w0 = oe_c0(4); 
-    w = w0 + dw * (dt*i); 
+    w = w0 + wdot * (dt*i); 
     w = mod(w, 2*pi); 
     oe(4) = w; 
     
@@ -249,13 +364,40 @@ for i = 1:length(rv_c2)
     
 end 
 
+
+
+% ------------------------------------------------------------------------
+% Axis 3 rotation matrix 
+[lla_rot_c2, rv_rot_c2] = lla_rv_rot(t, rv_c2, w_E, R_E, mu_E_km3); 
+    
+for i = 1:length(rv_rot_c2)
+%     lla(i,:) = ecef2lla(rv(i,1:3)); 
+    lla_rot_c2(i,:) = ecef2lla_1(rv_rot_c2(i,:)', R_E, mu_E_km3); 
+    lla_rot_c2(i, 1:2) = lla_rot_c2(i, 1:2) * 180/pi; 
+    
+end 
+
 % fn.plot3_xyz(rv); 
 % ------------------------------------------------------------------------
 % PLOT
 
 fname = '1.c Fixed and Rotating Earth with Secular Precession'; 
 plot_option = 2; 
-plot_gt(plot_option, fname, lla_1_c2, lla_1_c)
+plot_gt(plot_option, fname, lla_1_c2, lla_rot_c2)
+
+
+%% Problem 1.c.ii ANOTHER ANOTHER way 
+
+Td = 2*pi / (wdot + Mdot); 
+Dn = 2*pi / ( w_E - Odot ); 
+
+u0 = w0 + M0; 
+
+u = u0 + udot * T + 2*pi/udot; 
+
+dlambda = (-w_E - Odot) * Td; 
+
+
 
 
 %% subfunctions 
