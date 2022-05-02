@@ -14,7 +14,7 @@ cspice_furnsh( 'spice_data/nep095.bsp' )
 format long g 
 
 % constants 
-constants 
+% constants 
 
 
 %% propagate Triton 
