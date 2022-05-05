@@ -391,7 +391,7 @@ X_start = X_Nsat_ei4(round(end/2),:)';
 phi_des = 75; 
 plot_option = 1; 
 [ell_1_min, ell_2_min, amin_AU, emin] = lambert_prob(X_start, t0, phi_des, plot_option);
-
+%%
 % % BETTADPUR LAMBERT FN 
 % [ell_1, ell_2] = bett_lambert_NT(X_start, t0, phi_des, const, plot_option); 
 

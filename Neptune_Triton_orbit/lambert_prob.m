@@ -192,46 +192,46 @@ end
 
 %% propagate orbits 
 
-if plot_option > 0 
-
 a_ind = 160; 
+
+[rv_hist_1s, oe_hist_1s] = prop_probe ... 
+    (ell_1_hist, rd_S, ra_T, 'short', a_ind); 
+
+[rv_hist_1l, oe_hist_1l] = prop_probe ... 
+    (ell_1_hist, rd_S, ra_T, 'long', a_ind); 
+
+[rv_hist_2s, oe_hist_2s] = prop_probe ... 
+    (ell_2_hist, rd_S, ra_T, 'short', a_ind);   
+
+[rv_hist_2l, oe_hist_2l] = prop_probe ... 
+    (ell_2_hist, rd_S, ra_T, 'long', a_ind);     
+
+if plot_option > 0 
 
 fname = 'Ellipse 1 and 2, Short and Long'; 
 pos   = [100 100 800 600]; 
 figure('name', fname, 'position', pos)
 
     % subplot 1 
-    subplot(2,2,1) 
-
-        [rv_hist, oe_hist] = prop_probe ... 
-            (ell_1_hist, rd_S, ra_T, 'short', a_ind);         
+    subplot(2,2,1)         
         ftitle = 'Ellipse 1 Short'; 
-        plot_probe(rv_hist, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle) 
-        
+        plot_probe(rv_hist_1s, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle) 
+                
     % subplot 2 
     subplot(2,2,2) 
-
-        [rv_hist, oe_hist] = prop_probe ... 
-            (ell_1_hist, rd_S, ra_T, 'long', a_ind); 
         ftitle = 'Ellipse 1 Long'; 
-        plot_probe(rv_hist, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle)     
+        plot_probe(rv_hist_1l, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle)     
 
     % subplot 3 
-    subplot(2,2,3) 
-    
-        [rv_hist, oe_hist] = prop_probe ... 
-            (ell_2_hist, rd_S, ra_T, 'short', a_ind);         
+    subplot(2,2,3)    
         ftitle = 'Ellipse 2 Short'; 
-        plot_probe(rv_hist, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle) 
-
+        plot_probe(rv_hist_2s, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle) 
+        
     % subplot 4 
-    subplot(2,2,4) 
-    
-        [rv_hist, oe_hist] = prop_probe ... 
-            (ell_2_hist, rd_S, ra_T, 'long', a_ind);         
+    subplot(2,2,4)        
         ftitle = 'Ellipse 2 Long'; 
-        plot_probe(rv_hist, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle) 
-
+        plot_probe(rv_hist_2l, X_NS_fhist, X_NS_hist, X_NT_fhist, X_NT_hist, rd_S, ra_T, ftitle) 
+        
     sgtitle(['Lambert Problem: \phi = ' num2str(phi_des) ' deg'])
     
 end 
@@ -245,6 +245,10 @@ amin_AU = amin / km2AU;
 sprintf('a_min = %.5g AU, e_min = %.5g', amin_AU, emin)
 
 [ell_1_min, ell_2_min] = a2tof(s, c, amin, rd_S, ra_T, vd_S, va_T); 
+ell_1_min.rv_s = rv_hist_1s; 
+ell_1_min.rv_l = rv_hist_1l; 
+ell_2_min.rv_s = rv_hist_2s; 
+ell_2_min.rv_l = rv_hist_2l; 
 
 
 end 
@@ -305,6 +309,7 @@ global const
     % sun mu (m^3/s^2)
     mu_sun_m = 1.32712440018e20; 
     mu_sun_km = mu_sun_m / (1000^3); 
+    mu = const.muN; 
 
     % probe state in km 
     X_probe0 = [rd'; vd']; 
@@ -338,7 +343,7 @@ global const
         oe(6) = nu; 
 
         % convert to cartesian 
-        rv = rvOrb.orb2rv(oe, mu_sun_km); 
+        rv = rvOrb.orb2rv(oe, mu); 
 
         oe_hist = [oe_hist; oe]; 
         rv_hist = [rv_hist; rv']; 
